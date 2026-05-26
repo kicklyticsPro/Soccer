@@ -1,0 +1,2311 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kicklytics — Suite Complète</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+/* ── BASE (Predictor) ──────────────────────────────────────────────────────── */
+
+:root{
+  --bg:#07091a; --bg2:#0c0f24; --card:#111428; --card2:#161a32;
+  --border:rgba(100,120,255,.12); --border2:rgba(100,120,255,.22);
+  --gold:#f5c518; --blue:#2979ff; --blue2:#5c9dff; --cyan:#00e5ff;
+  --purple:#7c4dff; --green:#00e676; --red:#ff5252; --orange:#ff6d00;
+  --text:#e8eaf6; --text2:#7986cb; --text3:#3949ab;
+  --mono:'JetBrains Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;font-size:14px;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:-1;background:radial-gradient(ellipse 70% 60% at 10% 0%,rgba(41,121,255,.10) 0%,transparent 55%),radial-gradient(ellipse 50% 50% at 90% 100%,rgba(124,77,255,.08) 0%,transparent 55%);pointer-events:none;}
+.wrap{max-width:980px;margin:0 auto;padding:0 16px 60px;}
+
+/* NAV */
+.topnav{display:flex;align-items:center;justify-content:space-between;padding:16px 0 14px;border-bottom:1px solid var(--border);margin-bottom:16px;}
+.logo-wrap{display:flex;align-items:center;gap:10px;}
+.logo-img{height:42px;width:auto;}
+.logo-text{display:flex;flex-direction:column;line-height:1.1;}
+.logo-name{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;letter-spacing:2px;background:linear-gradient(90deg,#fff 0%,#2979ff 40%,#7c4dff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.logo-tag{font-size:9px;color:var(--text3);letter-spacing:3px;font-weight:600;}
+.nav-tabs{display:flex;gap:4px;}
+.nav-tab{display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:8px;border:1px solid transparent;font-size:11px;font-weight:700;letter-spacing:.3px;cursor:pointer;color:var(--text2);background:transparent;font-family:'Barlow',sans-serif;transition:all .2s;}
+.nav-tab:hover{border-color:var(--border2);color:var(--text);}
+/* nav-tab.active géré par .active-pred/.active-scorer */
+
+/* PRESET BAR */
+.preset-bar{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:18px;flex-wrap:wrap;}
+.preset-lbl{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:2px;}
+.preset-btn{display:flex;align-items:center;gap:5px;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid var(--border2);background:var(--card);color:var(--text2);cursor:pointer;font-family:'Barlow',sans-serif;transition:all .2s;}
+.preset-btn.active{background:linear-gradient(135deg,var(--blue),var(--purple));border-color:transparent;color:#fff;}
+.preset-btn:hover:not(.active){border-color:var(--blue2);color:var(--blue2);}
+
+/* MATCH HEADER */
+.match-hdr{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-bottom:18px;background:var(--card);border:1px solid var(--border2);border-radius:16px;padding:14px 20px;position:relative;overflow:hidden;}
+.match-hdr::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(41,121,255,.05) 0%,transparent 40%,transparent 60%,rgba(124,77,255,.05) 100%);pointer-events:none;}
+.t-side{display:flex;align-items:center;gap:10px;}
+.t-side.away{flex-direction:row-reverse;}
+.t-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.t-icon.home{background:rgba(245,197,24,.12);border:1px solid rgba(245,197,24,.3);}
+.t-icon.away{background:rgba(41,121,255,.12);border:1px solid rgba(41,121,255,.3);}
+.t-info{flex:1;}
+.t-lbl{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--text3);margin-bottom:3px;}
+.t-input{background:transparent;border:none;outline:none;font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;letter-spacing:1px;width:100%;}
+.t-input.home{color:var(--gold);}
+.t-input.away{color:var(--blue2);text-align:right;}
+.vs-circle{width:44px;height:44px;border-radius:50%;flex-shrink:0;background:var(--card2);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:var(--text3);font-family:'Barlow Condensed',sans-serif;}
+
+/* MAIN GRID */
+.main-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
+@media(max-width:680px){.main-grid{grid-template-columns:1fr;}}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:0;}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);}
+.card-title{display:flex;align-items:center;gap:8px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;}
+.card-icon{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.card-body{padding:16px;}
+
+/* TEAM COLS */
+.tcols{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.tcol-hdr{text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;letter-spacing:2px;padding:5px;border-radius:6px;margin-bottom:10px;}
+
+/* SLIDERS */
+.sr{margin-bottom:11px;}
+.sr:last-child{margin-bottom:0;}
+.sr-lbl{display:flex;justify-content:space-between;margin-bottom:4px;}
+.sr-lbl span:first-child{font-size:10px;color:var(--text2);font-weight:500;}
+.sr-lbl span:last-child{font-size:11px;font-weight:700;font-family:var(--mono);color:var(--text);}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:3px;background:rgba(255,255,255,.08);border-radius:2px;outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 0 3px rgba(245,197,24,.2);}
+
+/* FORM */
+.form-sec{margin-top:10px;}
+.form-sec-lbl{font-size:9px;color:var(--text3);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;}
+.form-row{display:flex;gap:3px;}
+.form-btn{flex:1;padding:5px 2px;border-radius:6px;border:none;font-size:10px;font-weight:800;cursor:pointer;font-family:'Barlow',sans-serif;}
+.form-sub{font-size:7px;display:block;margin-bottom:1px;opacity:.6;}
+.form-mult{font-size:10px;font-family:var(--mono);color:var(--text2);text-align:right;margin-top:5px;}
+
+/* LAMBDA */
+.lambda-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.lambda-card{border-radius:12px;padding:14px;text-align:center;position:relative;overflow:hidden;}
+.lambda-card::after{content:'\03BB';position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:50px;font-weight:900;opacity:.04;font-family:var(--mono);}
+.lc-lbl{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+.lc-val{font-size:28px;font-weight:800;font-family:var(--mono);line-height:1;}
+.lc-sub{font-size:9px;color:var(--text2);margin-top:2px;}
+
+/* ODDS */
+.odds-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
+.odds-wrap{display:flex;flex-direction:column;gap:4px;}
+.odds-lbl{font-size:10px;font-weight:700;text-align:center;color:var(--text2);}
+.odds-input{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:10px;padding:10px 4px;color:var(--text);font-size:18px;font-weight:800;font-family:var(--mono);outline:none;text-align:center;transition:all .2s;}
+.odds-input:focus{border-color:var(--blue);}
+.odds-input::placeholder{color:var(--text3);font-size:13px;font-weight:400;}
+.blend-info{display:none;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px;}
+.blend-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:8px 6px;text-align:center;}
+.bc-lbl{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:1px;margin-bottom:3px;}
+.bc-model{font-size:10px;color:var(--blue2);font-family:var(--mono);}
+.bc-book{font-size:10px;color:var(--purple);font-family:var(--mono);}
+.bc-final{font-size:15px;font-weight:800;color:var(--gold);font-family:var(--mono);margin-top:2px;}
+.value-alert{display:none;border-radius:12px;padding:12px;margin-top:10px;}
+.value-alert.show{display:block;background:rgba(0,230,118,.05);border:1px solid rgba(0,230,118,.2);}
+.val-title{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;letter-spacing:2px;color:var(--green);margin-bottom:8px;}
+.value-bet{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.value-bet:last-child{border-bottom:none;}
+.vb-label{font-size:11px;}
+.vb-edge{font-size:12px;font-weight:800;font-family:var(--mono);}
+.vb-edge.pos{color:var(--green);}
+.vb-edge.neg{color:var(--red);}
+
+/* RESULTS SECTION */
+.results-top{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;}
+.r-verdict-card{background:var(--card2);border-radius:14px;padding:16px;border:1px solid var(--border2);}
+.rv-lbl{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:8px;}
+.rv-main{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;letter-spacing:1px;line-height:1.1;margin-bottom:6px;}
+.rv-score-lbl{font-size:9px;color:var(--text3);margin-bottom:3px;}
+.rv-score{font-family:var(--mono);font-size:28px;font-weight:800;}
+.rv-conf{margin-top:10px;}
+.rv-conf-hdr{display:flex;justify-content:space-between;margin-bottom:4px;}
+.rv-conf-lbl{font-size:9px;color:var(--text3);font-weight:600;}
+.rv-conf-val{font-size:11px;font-weight:800;font-family:var(--mono);color:var(--gold);}
+.rv-conf-track{background:rgba(255,255,255,.06);border-radius:3px;height:4px;overflow:hidden;}
+.rv-conf-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--orange),var(--gold));transition:width .8s;}
+
+.r-scores-card{background:var(--card2);border-radius:14px;padding:16px;border:1px solid var(--border2);}
+.r-scores-lbl{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:10px;}
+.sc-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.sc-tag{font-family:var(--mono);font-size:12px;font-weight:700;min-width:32px;}
+.sc-track{flex:1;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;}
+.sc-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--purple),var(--blue2));transition:width .8s;}
+.sc-pct{font-family:var(--mono);font-size:10px;color:var(--text2);min-width:36px;text-align:right;}
+
+.r-summary-card{background:var(--card2);border-radius:14px;padding:16px;border:1px solid var(--border2);}
+.r-sum-lbl{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:10px;}
+.sum-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.sum-row:last-child{border-bottom:none;}
+.sum-k{font-size:11px;color:var(--text2);}
+.sum-v{font-size:12px;font-weight:700;font-family:var(--mono);}
+
+/* 1N2 BIG BOXES */
+.prob-1n2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;}
+.p1n2-box{text-align:center;border-radius:10px;padding:12px 6px;border:1px solid;}
+.p1n2-lbl{font-size:10px;font-weight:800;letter-spacing:1px;margin-bottom:4px;}
+.p1n2-val{font-size:24px;font-weight:800;font-family:var(--mono);}
+
+/* PROB BARS */
+.prob-bars-lbl{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:10px;}
+.prob-row{margin-bottom:10px;border-radius:8px;padding:0;transition:all .2s;}
+.prob-row.hl{background:rgba(245,197,24,.04);padding:6px 8px;}
+.prob-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.prob-lbl{font-size:11px;color:var(--text2);display:flex;align-items:center;gap:6px;}
+.prob-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.prob-row.hl .prob-lbl{color:var(--text);font-weight:600;}
+.prob-val{font-size:13px;font-weight:700;font-family:var(--mono);}
+.prob-row.hl .prob-val{color:var(--gold);font-weight:800;}
+.prob-track{background:rgba(255,255,255,.06);border-radius:3px;height:5px;overflow:hidden;}
+.prob-fill{height:100%;border-radius:3px;transition:width .8s cubic-bezier(.34,1.56,.64,1);}
+.sec-div{height:1px;background:var(--border);margin:14px 0;}
+
+/* AI */
+.ai-wrap{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-top:16px;}
+.ai-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.ai-title{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;letter-spacing:1px;}
+.ai-sub{font-size:11px;color:var(--text2);margin-top:2px;}
+.ai-btns{display:flex;gap:8px;}
+.btn-save{background:rgba(124,77,255,.12);border:1px solid rgba(124,77,255,.3);border-radius:10px;color:var(--purple);padding:9px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Barlow',sans-serif;}
+.btn-img{background:rgba(0,230,118,.10);border:1px solid rgba(0,230,118,.25);border-radius:10px;color:var(--green);padding:9px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Barlow',sans-serif;}
+.btn-run{background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;border:none;border-radius:10px;padding:9px 18px;font-size:11px;font-weight:800;cursor:pointer;font-family:'Barlow',sans-serif;}
+.btn-run:disabled{opacity:.4;cursor:not-allowed;}
+.ai-loader{height:2px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:12px;display:none;}
+.ai-loader-bar{height:100%;width:40%;background:linear-gradient(90deg,var(--blue),var(--purple));animation:slide 1.4s infinite;}
+.ai-result{background:rgba(255,255,255,.025);border-radius:12px;padding:16px;border:1px solid var(--border);font-size:13px;line-height:1.8;color:var(--text2);white-space:pre-wrap;display:none;}
+.ai-ph{font-size:12px;color:var(--text3);text-align:center;padding:12px;}
+
+/* HISTORY */
+.hist-wrap{background:var(--card);border:1px solid var(--border);border-radius:16px;margin-top:16px;overflow:hidden;display:none;}
+.hist-head{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);}
+.hist-title{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;letter-spacing:1.5px;color:var(--purple);display:flex;align-items:center;gap:8px;}
+.hist-clear{background:none;border:1px solid var(--border2);border-radius:8px;color:var(--text2);font-size:10px;padding:4px 10px;cursor:pointer;font-family:'Barlow',sans-serif;}
+.hist-body{padding:12px;}
+.hist-entry{border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;background:rgba(255,255,255,.015);}
+.hist-badges{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin:8px 0;}
+.hist-badge{text-align:center;border-radius:7px;padding:4px 2px;}
+.hb-lbl{font-size:8px;font-weight:700;letter-spacing:.5px;margin-bottom:2px;}
+.hb-val{font-size:10px;font-weight:700;color:var(--text);font-family:var(--mono);}
+.res-btn{background:transparent;border:1px solid var(--border2);border-radius:5px;padding:2px 7px;font-size:11px;cursor:pointer;color:var(--text3);}
+.res-btn.ok{background:rgba(0,230,118,.15);border-color:rgba(0,230,118,.4);}
+.res-btn.ko{background:rgba(255,82,82,.15);border-color:rgba(255,82,82,.4);}
+.res-btn.half{background:rgba(245,197,24,.15);border-color:rgba(245,197,24,.4);}
+
+/* FOOTER */
+.footer{display:flex;flex-direction:column;align-items:center;gap:8px;padding:24px 0 16px;border-top:1px solid var(--border);margin-top:24px;}
+.footer-logo{height:28px;width:auto;opacity:.6;}
+.footer-txt{font-size:10px;color:var(--text3);}
+
+@keyframes slide{0%{transform:translateX(-150%)}100%{transform:translateX(400%)}}
+
+
+/* ── SCORER PRO spécifique ─────────────────────────────────────────────────── */
+
+/* Gradient background alternatif pour l'onglet scorer */
+#tabScorer{position:relative;}
+
+/* Sliders home/away colorés */
+input[type=range].home-slider::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--pink);cursor:pointer;}
+input[type=range].away-slider::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--teal);cursor:pointer;}
+
+/* JOUEURS */
+.player-list{display:flex;flex-direction:column;gap:8px;}
+.player-row{background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:7px;position:relative;}
+.player-top{display:flex;align-items:center;gap:8px;}
+.player-num{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;font-family:var(--mono);flex-shrink:0;}
+.player-name-inp{flex:1;background:transparent;border:none;outline:none;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;letter-spacing:.5px;color:var(--text);}
+.player-name-inp::placeholder{color:var(--text3);}
+.player-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+.pstat{display:flex;flex-direction:column;}
+.pstat-lbl{font-size:8px;color:var(--text3);font-weight:700;letter-spacing:1px;margin-bottom:2px;display:flex;align-items:center;}
+input[type=range].ps{height:2px;margin:0;}
+input[type=range].ps::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;border-radius:50%;background:var(--gold);cursor:pointer;}
+.pstat-val{font-size:10px;font-weight:700;font-family:var(--mono);color:var(--text2);margin-top:2px;}
+.player-role{display:flex;gap:4px;}
+.role-btn{flex:1;padding:4px 2px;border-radius:5px;border:1px solid var(--border2);font-size:9px;font-weight:800;cursor:pointer;font-family:'Barlow Condensed',sans-serif;background:transparent;color:var(--text3);letter-spacing:.5px;transition:all .15s;}
+.role-btn.active{color:#fff;}
+.add-player-btn{width:100%;padding:8px;border-radius:10px;border:1px dashed var(--border2);background:transparent;color:var(--text3);font-size:11px;font-weight:700;cursor:pointer;font-family:'Barlow',sans-serif;transition:all .2s;margin-top:6px;}
+.add-player-btn:hover{border-color:var(--pink);color:var(--pink);}
+.remove-btn{position:absolute;top:8px;right:10px;background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;}
+.player-cote-inp{width:64px;background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:6px;padding:3px 5px;color:var(--text);font-size:11px;font-weight:800;font-family:var(--mono);outline:none;text-align:center;}
+
+/* FORM HELP */
+.form-help-btn{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:var(--text3);font-size:8px;font-weight:900;cursor:pointer;margin-left:4px;flex-shrink:0;transition:all .15s;font-family:'Barlow',sans-serif;vertical-align:middle;}
+.form-help-btn:hover{background:rgba(245,197,24,.2);border-color:rgba(245,197,24,.4);color:var(--gold);}
+.form-tooltip-overlay{position:fixed;inset:0;z-index:999;display:none;}
+.form-tooltip{position:fixed;z-index:1000;background:#1a1d35;border:1px solid rgba(245,197,24,.3);border-radius:14px;padding:14px 16px;width:260px;box-shadow:0 8px 32px rgba(0,0,0,.6);display:none;}
+.form-tooltip.visible,.form-tooltip-overlay.visible{display:block;}
+.ftt-title{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:900;letter-spacing:1px;color:var(--gold);margin-bottom:10px;}
+.ftt-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:7px;padding:6px 8px;border-radius:8px;}
+.ftt-badge{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;min-width:38px;text-align:center;padding:3px 5px;border-radius:5px;flex-shrink:0;}
+.ftt-desc{font-size:10px;color:var(--text2);line-height:1.4;}
+.ftt-desc strong{color:var(--text);font-weight:700;}
+.ftt-sep{height:1px;background:var(--border);margin:8px 0;}
+.ftt-tip{font-size:9px;color:var(--text3);line-height:1.5;}
+.ftt-tip span{color:var(--text2);}
+.ftt-close{position:absolute;top:10px;right:12px;background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;}
+
+/* GENERATE IMAGE BTN */
+.gen-img-bar{display:flex;justify-content:center;margin:20px 0 0;}
+.btn-gen-img{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#1a1d35,#0f1228);border:1px solid rgba(255,77,141,.35);border-radius:14px;padding:13px 28px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;letter-spacing:1px;color:var(--pink);transition:all .25s;position:relative;overflow:hidden;}
+.btn-gen-img::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,77,141,.08),rgba(124,77,255,.08));opacity:0;transition:opacity .2s;}
+.btn-gen-img:hover::before{opacity:1;}
+.btn-gen-img:hover{border-color:var(--pink);box-shadow:0 0 20px rgba(255,77,141,.25);}
+
+/* RESULT CARD */
+#resultCard{width:520px;background:#0b0e1f;border-radius:20px;padding:22px 20px 18px;font-family:'Barlow',sans-serif;color:#fff;position:relative;display:none;margin:20px auto 0;border:1px solid rgba(255,255,255,.07);box-shadow:0 20px 60px rgba(0,0,0,.7);}
+.rc-hdr{display:flex;align-items:center;justify-content:space-between;background:#131627;border-radius:14px;padding:14px 18px;margin-bottom:18px;border:1px solid rgba(255,255,255,.06);}
+.rc-team-home{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:#f5c518;letter-spacing:1px;}
+.rc-team-away{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:#5c9dff;letter-spacing:1px;text-align:right;}
+.rc-vs{width:40px;height:40px;border-radius:50%;background:#1e2240;border:2px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:rgba(255,255,255,.5);letter-spacing:1px;flex-shrink:0;}
+.rc-section-title{text-align:center;margin-bottom:12px;}
+.rc-section-icon{font-size:13px;margin-right:5px;}
+.rc-section-lbl{font-size:10px;font-weight:800;letter-spacing:2px;color:rgba(255,255,255,.55);}
+.rc-section-sub{font-size:9px;color:rgba(255,255,255,.3);margin-top:2px;}
+.rc-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
+.rc-grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;}
+.rc-stat-card{border-radius:12px;padding:14px 10px 12px;text-align:center;position:relative;overflow:hidden;}
+.rc-stat-label{font-size:10px;font-weight:900;letter-spacing:1.5px;margin-bottom:2px;}
+.rc-stat-sub{font-size:8px;opacity:.65;margin-bottom:8px;}
+.rc-stat-pct{font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:900;line-height:1;margin-bottom:6px;}
+.rc-gauge{display:flex;justify-content:center;margin-bottom:8px;}
+.rc-conf-badge{border-radius:6px;padding:4px 8px;font-size:8px;font-weight:900;letter-spacing:1px;display:inline-block;}
+.rc-scorers-section{margin-bottom:14px;}
+.rc-scorers-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.rc-scorer-col{background:#131627;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.05);}
+.rc-scorer-col-head{padding:7px 10px;font-size:9px;font-weight:900;letter-spacing:1.5px;border-bottom:1px solid rgba(255,255,255,.05);}
+.rc-scorer-row{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.04);}
+.rc-scorer-row:last-child{border-bottom:none;}
+.rc-scorer-rank{width:16px;height:16px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;margin-right:6px;}
+.rc-scorer-name{flex:1;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:800;letter-spacing:.3px;}
+.rc-scorer-pct{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;}
+.rc-scorer-bar-wrap{width:36px;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;margin-left:6px;}
+.rc-scorer-bar{height:100%;border-radius:2px;}
+.rc-score-box{background:#131627;border-radius:12px;padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;border:1px solid rgba(255,255,255,.06);}
+.rc-score-lbl{font-size:9px;font-weight:800;letter-spacing:2px;color:rgba(255,255,255,.4);}
+.rc-score-val{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;color:#f5c518;}
+.rc-score-prob{font-size:10px;color:rgba(255,255,255,.35);margin-left:6px;}
+.rc-winner-box{border-radius:12px;padding:13px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+.rc-winner-lbl{font-size:9px;font-weight:800;letter-spacing:2px;color:rgba(255,255,255,.55);margin-bottom:3px;}
+.rc-winner-name{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;letter-spacing:1px;}
+.rc-winner-pct-wrap{text-align:right;}
+.rc-winner-pct{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;color:#00e676;}
+.rc-winner-sub{font-size:8px;color:rgba(255,255,255,.4);letter-spacing:1px;}
+.rc-best-box{background:#131627;border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;border:1px solid rgba(255,255,255,.06);}
+.rc-best-lbl{font-size:9px;font-weight:800;letter-spacing:2px;color:rgba(255,255,255,.4);margin-bottom:3px;}
+.rc-best-val{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;color:#ff6d00;}
+.rc-best-right{text-align:right;}
+.rc-best-conf-lbl{font-size:8px;color:rgba(255,255,255,.35);letter-spacing:1px;margin-bottom:3px;}
+.rc-best-conf-pct{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:800;color:#f5c518;}
+.rc-stars{color:#f5c518;font-size:10px;letter-spacing:1px;}
+.rc-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,.06);padding-top:12px;}
+.rc-footer-disc{font-size:8px;color:rgba(255,255,255,.25);line-height:1.4;max-width:300px;}
+.rc-footer-logo{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:900;letter-spacing:2px;background:linear-gradient(90deg,#ff4d8d,#7c4dff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal-box{background:#111428;border:1px solid var(--border2);border-radius:20px;padding:24px;max-width:520px;width:95%;position:relative;}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;letter-spacing:1px;color:var(--pink);margin-bottom:16px;}
+.modal-img-wrap{border-radius:14px;overflow:hidden;margin-bottom:16px;}
+.modal-img-wrap img{width:100%;display:block;}
+.modal-btns{display:flex;gap:10px;}
+.btn-dl{flex:1;background:linear-gradient(135deg,var(--pink),var(--purple));color:#fff;border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;}
+.btn-close-modal{background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:10px;padding:11px 18px;font-size:13px;font-weight:700;color:var(--text2);cursor:pointer;font-family:'Barlow',sans-serif;}
+
+/* NAV TABS UNIFIÉS */
+.nav-tabs{display:flex;gap:4px;}
+.nav-tab{display:flex;align-items:center;gap:5px;padding:7px 14px;border-radius:8px;border:1px solid transparent;font-size:12px;font-weight:700;letter-spacing:.3px;cursor:pointer;color:var(--text2);background:transparent;font-family:'Barlow',sans-serif;transition:all .2s;}
+.nav-tab:hover{border-color:var(--border2);color:var(--text);}
+.nav-tab.active-pred{background:rgba(41,121,255,.15);border-color:rgba(41,121,255,.4);color:var(--blue2);}
+.nav-tab.active-scorer{background:rgba(255,77,141,.15);border-color:rgba(255,77,141,.4);color:var(--pink);}
+
+/* SYNC BADGE */
+.sync-badge{display:none;align-items:center;gap:6px;background:rgba(0,230,118,.10);border:1px solid rgba(0,230,118,.3);border-radius:20px;padding:5px 14px;font-size:10px;font-weight:700;color:var(--green);font-family:'JetBrains Mono',monospace;transition:opacity .6s;}
+
+/* WRAPPER ONGLETS */
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+
+/* COULEURS SCORER */
+:root{--pink:#ff4d8d;--teal:#00bfa5;}
+
+</style>
+</head>
+<body>
+<div style="max-width:1040px;margin:0 auto;padding:0 16px 60px;">
+
+<!-- NAV UNIFIÉE -->
+<nav class="topnav">
+  <div class="logo-wrap">
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYAAACOEfKtAAAdfUlEQVR42qWceZhkZX3vP7/3nFNLV/Uy07OyDDMMMwwDsiPrvS5IgpooIEY05rqgAVGi4kVMbvLEa6I8GDQJNwnkAUENIKJsLqiAIoIsDgzrsA4wzDBLd09vVV37Oe/v/lHV3adOnVPVc289zzw9deos7/m9v/X7+76viDOkCO0fhY5jHZ/QSaogEjkWvUfrwNy5MScpINr6EjMolfifuo1SFWl7XvhZofHP3lgS3jV8fuhj2m4YJ6OkYxq+mbSOS9uh9o/MD0LpPH9OlhK6H+3nSg/haeQfhIQ3O4bZSQiNQ6RTeBoZu0iMDMA0patdBNUph+ZfbT8mC1DYub/aeX7Hd50XqvSY1Og4el2jMRYivW4eP1smVrId1jMrZG1/huq8QMLC0chYNPqSErqXJmi6JAtp4e8X/12S3IwsTJGkNT4Bkyj02JkMv3hY7cO+SbpoV0i4KiEt1k4TDD9bE7Som6bP3lu1UzPjFKXXMxImzsw7i4RRKe0OVmR+ENLlZWJfXtonR2d9knR3BdEX76aJEvGZicKOWIrEmLd0i5/N692e9iG0O3UWqAndXEI3s9QuGcFCzbfNt0n8WMKRWRMClPa+v1lw6tI2QyHTC2uHxpjCvgiPGK1eaHBaaJAhqs2S7D9jNVjbMgjTbr66j1OckLZIjwlZiHBkgQKTJBPupeXaI9AkTc5sHNCQAGcjnkpySqPRRDccnWP8xv+vcDQhEso+mjBdrEJmLUjjA2c08EhsEJFIEJHOmermk4T4SMo+ml5Uc6PFiu6DVi7Iz0Yk1cuXC5GqZVaAEjPdSnJ4kpDD01Bm37UK6ZEuLCSgSI9rdR+e0cuHaowvjOaQcwKcM0HpjLwym0dp6OJQTRqtKHqZmGpvk9UePlKSkvMu9xSNT4s63HkoKLb9P3m2TZtURWLUWRKqAun0g20VSdwlkvzSklAWJuAOXf1cR9IsPSwhVA1pKMpq1CK1A3hw27L1xFJKO8uvbg5JJN4DCOA6MSCDhSAIaX2yT5QQgqKxvlriv0tEYG2oUVxF1SusNz9up8A0gjxolzxBOotFjQlKcy+gaG0iZkApcPqQ2RMjjzCmaShBw0fVbx13cT0XRLBBgGrEhiUiuLZA0CojNSE6aUwyPpf/ShvY4bZpy5z2RLQoLkzODUB6YIXzwsOB/KcvJrVuLVr3sb6FTIba7x+jetePwO2bNyEBEYP1GwT+FOCQzS9lcGgAUWViYpJaZW9rWP24qRSBH7S7CokJAtpZjrVhlBLnRzUezqKjlAtpnGoP85TuUTPsFoxB6wXSp76Toav/dU6etgySA5sZonrnjWDyEPhzvtg2iuQHl3DK28/m+JNOZsXKZQzkMwz1Z8mnPQpTU/z6vt/w/e/fTLEwgptaTGBtE0TtwCGjmiXt/kxjBC4kpzkt7XXjBUU8bBGHCGtkdsJa3Ib9WSSfx9YsdmwSDQxa8ZH8IuzETMQnKqoNNh57KkcefzKTY7v44feuZ3pyL8ViCbAsWTLMCccfw3kfOofPfvZCvv3tf+a6a6/B8Yawc8KR3r5ZYjQwNu5obNnjJsstbM60Bw9NQkg03unOKnUjIKgL2nDAN2hNwXGhYdomRERZs/5IPC/DnTdeS19+gMOOPp4/+eB53PWD/2Lb1qfYub3Czu0vceftt3DohiP4wS23cOIpp/LpT3wcN9WPtdKuG9E0LYyOx8kpFsPsTKpNdyAz6gslHubqgOhlPiUKXxOALVls2WJLis4AM0CtXaP7h5YyNrKHpx/7DfVanbUbj2b12g1MTpV5zwc+zLEnvpP+gT5Wrd7A207/U9568mkcd+xxrDxgFf9+7Xfx61OtwKOdlVKSMmmMEBeQh7pzWhanhmETVIlxytrpCzUJ9WhmK7akaAloKDKjaABUWydZxXgpSjMF/EYNk8ojVhGEyYlJjBFYsoyNx5zEEceewH4HrqHRCFiz9mBW7H8Qf3LG6dz7yBN84COf5rabr8NNLybwfToCZVIKpqBoex+lRxlp2hDbNs2LQTM7IpokVwEdUL2gDcUWFIqKFhQ7o9giaHU+XbCBj9+oQ9DA1qvkBhfhpbOUSzOowsTYCE8/sYl64PHG9t2MjO7l9w89wvLVG3nnu8/i/D//KB+78HP05YcJ/Hok6IUyiLhWgkSbUAlRXKOViMZ0oTocMN1bftqr8FXwgSnFTjf/aaH5d04DZztdxrB8/WGk8/0Ilh2vv8Lk3lG2PLWJ+39xB1s2/4EXnn4CwdKo1VBrefGFF9l49Elsf+1Zntr8JO9891loUJzLITvA1Y7SNWLiqp2VVbTSIc4HShfATiP1ZbQHIj3QkYaiUxZbULQItgi2ALYq8+mOrZA65BBWvfQEmc99EbdSx7cBz2x6iG0vPk2pMI0CTz/2O559YhMN36c0MwMI9/78TkSEu++6kw1HHtOGF7f7Qmm3MiW5hO3R5XNj0xaJpAHapcmdVL/GFPUagBZBC6ANgYogKQmZsAGt4b7jDJ675ZfU7rufvBFcPwARxE3NP8J1efbx31OaKTCwaIjtr77A1heeQ8ny0nPPcPLb3oXjDhAEQdMsNRRNNeK7u6U24YxE2utlbRegdtaVifC6dCk+NDlF8AVbaPo96opWm10ZW7GIuGhlhOy5n8KaDNUPvxvPHYJFS6hXyhhj5oXRCjjZXB8HrjkY1/MozxRxvRQ2CJgpFhgfGyOVzVKZmQHHSQBCFgC9hTORcHkqimhMJaLofF2tSSArnXVzR58hZlp9xU6DFrUZUCqKGouSR9Une/oHMAeup/TPX0ZwsF6KeqWCl063XJJttbIFtQHDyw9gdGSUcmmGfP8Aw8v2Z9e251FNMbpnDzawnaarXVoQGlP/Rks4kfkSsN1JRO+bkJJLwix11IztdAkBrA9+AYKiwS+CraaRwGBf+S2pw4/BfesZ1G69lr6PXUjfld+BlStolItUK2Uc18NLZXA9DzEOqdwgGI9CoYBiKJXLpLI5Vh50KK7nMTU5Qb1WRcSJsQhdGOgaRaElHIBk1gdGHNZcGaadLcGoOYfRDIn4yjCIMHsbX/GLICUfY1LI5HPIpn8g7e3Aef8lFK+8hOyffYz0P1xFfQ/odVdjbRUNPNKpDF46i2hAMDNFrTzN+PaXMMYgMgtrGkw2TzrTx9jIbjSoY7wMGhVArEZqvL8P95hjEHK3rWQLgwAaU7LFoVhhpywRECJkAgpIoJhyFVOdxssvpXz//+KAS07DOf+XvP7fT4V6AVtzaTzjo3uLzVIPQVWp1+v49QrqpRk856/pX7wS1LZuH+CkHAgsO667jKVDSxjZ9SaIMy+8joQvrtcThqpa54h0bTu48y8dxdO6dLM09BCNS5I0Fk8UtTjVKYxxCXZsQlJjTK77C6p3PowZfxMrBgoWdrvouEB99r4G61exjrDigtsYOOntOEEzNoiAeGAysO2bF2BqJWr1AWYKk4jjLqBLFNZG7aSySLe2rODOm6HGQzeSBKdLctcnUrjMuVu/hjEGHXkB/9VvYc69iNKXP4rd+XgrIbAEBYVtFjsdoHVtpjbWBwlY8rHbyK57O8GOCngOahRjLG5/lm1X/iWTD16Ll13BzPREZ9oXBjziGudzxyW5wRXTKTTxQoikNZLQ+JGY7FLmHWz75FnEy6Ejz9PYegXumecS/PR6dPeTeIccTfqMszGLl2DHywQjJWRiCrGzNXKVoXNuIrPuTOxoFamnkIqDVISUl2X39/+GyQevxaSW4DeqqA06FSGOnxONuElVQFK/Gp1NY2L8V9z0xSbL0s4q1fhBiZtFJ7fib7sK94xzqf30OuyuzWQ++3Xc938eTJrgcydgi9O4xV1IaQQ/qKNaI/fHN5FedxY6UkHSHlIHY3wyg2l23/ZNRu+5HEkNo9aPuBRJAEklmSmhSYh6JDCqhCuRMDyv7RFVuiXLoXQligvOugaRFiJdxSxp4J5+DrWfXIWOvQriovU8dqdAYRStgPGLmKk3oDqFVsfJn3YV+fUfxh0rkvJSeA3FNQG5wTSjv76W3b+4DPEWgw1C6UYExxTtLDnj+h5t2YjGl6kRqbudSXFMTyQWQJVQwS3x1YwIWIv4BZwDN5J67xep/vBy7ORWIAv42JEqsqMAlRpaF6RRQEqj1LbeRP+Rn2dgw2dxJ/eSclK4DR9HIJfLMfHYj9n2y4sQd6i9FYnG9Dik039JnFLIAqkj851Bt4PaEeXrxUo/UjfH+RkBtT7u0DDrvnsHO3f2M/PXHwF/HPewk5EVB+A/8gt0fAbdVYBSAa3WEZOjvvVG+pYdx6JDP4Nb2IUnLp40cLVBNj1I5bVHefmX5yFu/3xbtA3MTYCjhC5sMEkmXyYxJURaeWDY3qO1n/ZgP2lcjdyKnqqoY9iVOZbaplvRwhtkv3k/NrsGnDrB0w8i01PI6E6kMo3BozGxiYHDL2XR+ovwCrtJ4eGJ4mHxxCEVlOjLHMr+a/4HO1+/AeMNN3O9haw00B6t3rCP61YvSxiRngsC0jv3owseiHQ0lcTxsHvHKLz3MPDLyMBKgjGFxhj4RbQBlMYxE28g9TK2upf82o8ztObjuIURPHFJGSFFU4ApETypk3b7OOW477BZ0rz62jUYdxglSKa/6QIE2fbu3fo+7dVMjAbG9EFjZ0m6xfd5bXZcsCUQRX0fduxBnDJaLYKvSG0KmRmntuNucvv9KYvXXoBb3ImLS8rkcW2JtMnhAZ7WSZkUninjOAFve8vVpNXj+df/D447jCVIzlvj8j7iCAQS34xPIDc5YjJfbfcd3dZMRCNTnG5L5wTMFvTGxVl8NFIqI4W9BNt/h5Maxp96gVR2NUMHnodbncD1LSlr8HyfV579K8pTWzhw0R/hBg3cwJJWBy9QnEaDDSvPpuYX2T3xGxyTQ6NQXJxCCDFgqXSmbNKFdtf6ISTABORFEwpBiUNtNF6gc2wnByd3EFItI6W9BBNbCMpvkl18IgMr34dTncb1AzxrSFnhtZf+nsLUoxRnnqFeHeWA/DvwrMWzLQEH4DQaHL70fTRsjR0T9+KYvo4WSGxbs6dr6kFmal3cFKCEcK7YwjsGVY2NzAkUVZkPLE5mOVIvQ2Ucf+oFMsvfRX7puzCVSVxrca2QtoYd2/6FqakHMd4QYrJMFR+lXNvF2oHTcfwA1wakrINnBeP7HLnkvfg2YNvkr3Ccvk5SlkiyRiVRY6R3I88RJ/PVdtm0UaEiZhtBK0hobYYFH/Y1YjCpRWhtEn/qJdKLTyS76CSkNoVrwQ0C0qTZtet7TE7e38rxAhDFmBxT5c1MVbZycO4dOBYkaOCpwQ0UrTc4ZvF7sCJsnfwFxmTjQQFZCPGq1dpUjXdJbSYsIRPuSuuSZDMOw0BxoXvu4Qa0jlbGSQ0eSzq/AVMv4qrgWkhpmrHRO5icvh9xB5r5XQgVMKaPqcoz7K28xNq+t5Mii7GWlHqk1cVYOGHRuzDuAC9M3o0xqXhUPcl1t86TaHhOIBYhRHygSAK7IJqgRgcURaFD9tEGjSti+vAGj8Jx+qA2ifhVpFFFghpT0w8yVfw94uTaoaUQ6GlMjunaC4xUn2dZagMNf4a6X8D3SzT8IqXaNIflT6JGnW3FhxGTig8IdOuHSLv/jms6taxQxBnUdpBRYtj4Ekuy1jbcJcKdC+dS4aGZNGiAatCa7VbTHYvaWvOFY5s586mRiIO1ZRzTh5FU81hE89NOjpnGRMTdxKDS0S4dXZbbdrgwbQlQpD03inbmVNpBBBJywVgCThSQsDF0kFk/a1q/E992DPkiQbBYktlltsmdirKv0PZ1er2W6cblh+0MVYnRNG2Dq1zXIQiC1lfBabUJgyBo5couai3WNoVjjGnyWEJSnL3e9VLN/7cG5jguguIHQVN4jtsi0dj5l3acFqEwCJFSHGRWC4wTEweCltxMk9XaEqKIGxGSRdUiMt9bmZedzlc4cWTNpga2VqwncJrV2iZ9gBzGbfoT25hsvdgggqDBFJBB3CxGhKBRASqRN+pHHKd1bg5xU61zJ1vQ7iBiBPWnELLgZpqCVEVtAUghXr4lWFB/qkkNxgNKMRqYa/0tIc4giGkCrbbQQS8WN4f6FaDa6Q1n0Z7YxYvRUi5cbAjYwGdw0SL+/u/+kauvuZ6tr7yE2jp/9flLWbt2Nd+4/FuMjuzh61+/gnvuu58Hfns/gQrr1q/nU5/6BCtWLMNaizGGr/3jlWx7/XX+6cqruP6Gm9jy3DMEtsZfXvA5jj76SC6//ErefHMH+c/+E7WH7qHxzO8Q8XCWrWLwI5cyc++t1J79FeItQv0yiz92OY2xMWpP3svwn12KNCxUSripPG7aY/Tu/8RanyUnns2bP/o61tZx3T42bLyU/ZYdha03yLppXnn957z42q0MDx/D8Yefjyt5CAJS4jJdfJMHnvsGtgsmYJKK5WYeFNCfz/HFL1zM0qXDqK1wyw9/yLe/dTmPPPIYe0f3gDh86ZKLOeXkE0FrnHzKSTzz1GOce+5ZrFyxlNWrD6K/P8/ont3kcs17rTrwANRW+M53buA/r7mKTZs2sXvXDoybJnPmF3FWHQVaAy+DP/YatuKx7Cs/w1uxEW2MM/yRK1hyzleovfAwfRtOw1u8P7kDjmX5H19EZngtrreE6sgr9B90AqveeQlgcRyP9539M0478Wvk3eUsyqxi0N2PmeIePLePD51+O6sWn0JG0/TJIHlZRFCrYIPKvGlrXFcuTjWl3Q/MzMwwODDIHXf+jI2HrefIo07g+S1PIu4iNGiwd3yCSqVpst/+1hU88eSTnHbqaYANzUyGxUuXUygUyGTS3HjTDznt1JM47riT2Lz5saaZWcV/eQyma3PBTEgzefVH8dIHsOSTP6L8wFUMn3ExO//mHOqvP0pj+4tM3X81/YecwdrP3MbWK96LDaab2lG3OLvGsf40hx3+BZYOHsPNN7+FQvGlNh3K59axTPbn589+k1d3343jDBDYGhPll6EV5duS6lBUd3t1/IwxWGu547abSGcyXPrlv+X5LU+SyS2nVmtSS13XxbYaQIcddijfuPxKwNKXX0mj0UAE6tUKglCv1fnBzTeQSqX431+7nM2bHyPdt4xGvYZF0YkQY1Wb5Z84Ocau+RD7XfgAKz74H4xcdxmlLXcgqSVNR64ebnqIVNXFzQ/TKBu0MYVTV7Ll5isuHXgLEzufpVB8CSe1DNWgFaCVmcobPPz0tznnkG9gD/oGxlpyTh/bi4/z70+9n2pQBpwIeSAM6ccsatbWF9/3yWaz/Mu/Xs1TTz3FTTdez+DgAH/3t5eB5EGa58zy8B59dBOf/MRfcM3VV1MojLdu6mFMM5Ln8jlu+O6N3Hffr/nRrTfR39/Ply65GOhDvBSMldBStcnSCSrNhMXLodURZn77b6ROvYzph/4NcQdb7U6DWos0GnhFH4IADYKmg68r2UIDMIzsfpiTVn2S5Uv+GyN7HwSTbsZBk0MkxT0vfon7X70cV1IEtszy3BFccfSDrO0/hefG78K4Q3O5a9jXufPclriV3YrjOHiex22338ljj9xPqTTDnXfcyrp1a7nwgouYLpZYsmSYTKY5oC9cchn3/eon7Nq1nTff3IHjuBSLM5z5nnMolytks1luv/0n3POruzjzzBnuvvt21h68mvPP/zRThRpOoU7+8C+TW/3nuE4W45cYf+hiGrVRJEiTruUQL421TaaWICiKsSlyfn+zEGulsik/Q740iHEHeGX7LWxbfhYXnfA7JqdfxPGhX1P8+LWv8NzEHZx36A0cNnAqflDDscqgGWR6ZpRdpS2IyXRCeTqHB6a/2m2JpLWwe/cuHt+0mVLZ54XnN3PXT+9lcLCfnbv2Mja6h9GxvTzwwEOMjI6zd3SM6793M9u2vcHWV1/n6Wee5Z57f8PDDz+CcVx279rJHzY9QaFY5ZWXn+XHt9/NwMAAe0bG2b1nF5THCfY+QzD5InbqZao7f0tt7+NNR+7XqO3dQnXi2aZmhkpIDRqUR19menRzC+IXNKgzNfYM41PPogJbdv6IkemnKNX2MDLzHG9MP87Tkz/DCgy6yxmvbmVnaQsjlRd5vfwHbt7xVcZqrzYFGFdaAiLukHYDTufzwDziuBjHIajPUuv7EDfVysmyiJtBRLC+32RShtTZeM18yvpTczlh816lVv7Vh7hp8GdQGmHACOP2oyKIrWODcute85xMa0FtHWwr5zOmKVS/AlptmnurylG/0B7cnH5EnNY7RBnkWcRk56ujmGZVuwATPq7jzFcPAkZMk/DoB6haHMfBqs7PvN8UgJfJ0qjVcDyPoF4FArxMP41qqSmsVpAyxtCo1lp1qQ9OurX4cLYl4LdeQhEvizYqIWZeA3GzzapaHDSoo7bREm4KUUE1QGkgJo1xvPmS1GqzDYBixG1DXWZLRcV2BR/m0ZguG0XYcP9XBBXBiiCOg7gu6jrgGMRa1PqsX7+OA1YdyO5dO1m3/hCmC0UOOWQtq1cfxJtv7uawjRsZGxmbK69sELBivxWIwIYN6yiVqyxfsYT9D9iPmWKR/EA/g0NDHLx2NXvHxjh47RqM6zI0tIijjzmS7du2N+EEDZD+AZzVqzHDS6Feg/4cpq8Pd83BaKWCrZTASNPlZ1OI6zQrJBFUFFWLok3BRQk+sUv+NYaEHbvzUIgm1JfDWbQYs9/+uGvX4B51BGbd2uZqSxvw1hOP58w/ege5fI6LPnM+bz3hWDwvxeDgEKsOXMn//NLnWDy8iMHBfhxjUKsce8xbGBoa5MILz+fYY47g4DUHcvZZ72XpsiWsPXg1Rx25kQ+eezYDA/18+LyzOeWkEwgCn5Url5NOuQwODTRrZUdIf/ITZD9wDuK6pI7YiFkyTO6CC3EOPAAZyDVfJZ3GPeZI3A3rMQetwlm2FNM/0DT/pN2KYnvszpAm4mQJLLA5AmbLbOegJNdBNWDx4mEApqemyOXzWKuUS00mfTqTxnMd6o0A1zGUy1VULelMGr8R4KWcJo4qQj7fx+TkNMYIxjgsHh5iZM9eXLfJ+2s0GhjHwTEG13WpVMrNcfT1IWrRShXJZNB6Hclkm67FdaFSaY498FuAWnhTIdN9gU0HFBrd/k678EeSegNhVmsrIjabcW4zJxMB48xn9NbOzbSY2WA1SwXR0CTNojOth1sfHG/unCbSMr9oRpzWy7eQHzFmLhnHBvPjNCYEFmt39kGPnsh8ENEezbW4VTsdd5tFaUOFhAgauaCDaUt76yFpz5smuVzbVh8sfM8GIXG9XHSF+z7sT+jG76fSYwzSjTMdXYfYuY+CxuFrESw3bpuGWQxRkzYP61qWajxRSujkdy8QmJ5HY2DhWyzFNmS0K0mho+sp9N5oQum9AxEk7/YWHUsc0Vxi3gOS9y3UuCgMC990SxMGGEcL67WPi/w/TJYmNXhihJk07rb1z5F7RlcZJFqnRgSondTVRA1K6r9ol65/tx0lk1KGbtvg0UULe3H6Yim+YVKlQhw9pK2Uk9BCG+32sB6ak7RlXHSpAwvQvo79BrX39nPajWpH8l5YsZuOaSePWhPcAGGSea+dImWBZpzEnxGS92NN7N9rJ+Ex9npNpGcs+COElvRLfIeug7Exf9wsyEnTIzOPRro4n9SL8JhAoY31XdEtBjQmosf5sm5uRkneKrRLT8SNFYjuQyoT5dUsdOPEhWiGxlCJZQFlliw0tekxqdJbucx8WbZAn5c0gK6OXLu7gG5ETpHumrSQ6qGbD+zGyF3AYkS3Jy9uIRqYZA4aQ8rsJbCk6xdUbXQRXtzxni6pd5pl9inCdXOKXXf+odOnLYTMGLetclwO1y21SdpOT3usSOr2m8yDKiZ25U5SdRBNNmdRaxI0cNZ3Cd3rzJ4byWqnYBe8Q7Amu4a4ykj3bXxu51YlsjATDpmXyALNqZuJ6AK0URN8WdJvCVubJDGRe8JXMdeZdmrvPiAREmMrYWISCS+uMSa2L5vSdk3ktXN7emJqdfbB30n3Y27bxjtx6EWSusS+uLYvVIldmxbZlEJ6+CeVeapxW34o8TlonKp0QDwaX3H0MguJVCwi/F8C+qb50SQl2QAAAABJRU5ErkJggg==" class="logo-img" alt="Kicklytics">
+    <div class="logo-text">
+      <span class="logo-name">KICKLYTICS</span>
+      <span class="logo-tag">DATA . INSIGHT . WIN .</span>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <div id="syncBadge" class="sync-badge" style="display:none;opacity:1;transition:opacity .5s;"></div>
+    <div class="nav-tabs">
+      <button id="btnTabPredictor" class="nav-tab active-pred" onclick="switchTab('predictor')">
+        λ Predictor Pro
+      </button>
+      <button id="btnTabScorer" class="nav-tab" onclick="switchTab('scorer')">
+        ⚽ Scorer Pro
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     ONGLET 1 : PREDICTOR PRO
+═══════════════════════════════════════════════════════════════════ -->
+<div id="tabPredictor">
+<!-- PRESETS -->
+<div class="preset-bar">
+  <span class="preset-lbl">MATCH :</span>
+  <button class="preset-btn pred-preset-btn active" data-preset="0">⚡ Lens — Lille</button>
+  <button class="preset-btn pred-preset-btn" data-preset="1">🏟️ PSG — OM</button>
+  <button class="preset-btn pred-preset-btn" data-preset="2">⚽ Lyon — Monaco</button>
+</div>
+
+<!-- MATCH HEADER -->
+<div class="match-hdr">
+  <div class="t-side">
+    <div class="t-icon home">🏠</div>
+    <div class="t-info">
+      <div class="t-lbl">ÉQUIPE DOMICILE</div>
+      <input id="homeNameInput" class="t-input home" type="text" value="RC Lens">
+    </div>
+  </div>
+  <div class="vs-circle">VS</div>
+  <div class="t-side away">
+    <div class="t-icon away">✈️</div>
+    <div class="t-info">
+      <div class="t-lbl" style="text-align:right">ÉQUIPE EXTÉRIEURE</div>
+      <input id="awayNameInput" class="t-input away" type="text" value="LOSC Lille">
+    </div>
+  </div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="main-grid">
+
+  <!-- GAUCHE : STATS -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title"><div class="card-icon" style="background:rgba(41,121,255,.15)">📊</div>STATS DES ÉQUIPES</div>
+    </div>
+    <div class="card-body">
+      <div class="tcols">
+        <!-- DOMICILE -->
+        <div>
+          <div class="tcol-hdr" style="background:rgba(245,197,24,.08);color:var(--gold)">DOMICILE</div>
+          <div class="sr"><div class="sr-lbl"><span>xG Marqués</span><span id="hXgAttVal">1.55</span></div><input type="range" id="hXgAtt" min="0.3" max="3.5" step="0.05" value="1.55"></div>
+          <div class="sr"><div class="sr-lbl"><span>xG Concédés</span><span id="hXgDefVal">0.95</span></div><input type="range" id="hXgDef" min="0.3" max="2.5" step="0.05" value="0.95"></div>
+          <div class="sr"><div class="sr-lbl"><span>Tirs Cadrés/M</span><span id="hSotVal">4.2</span></div><input type="range" id="hSot" min="1" max="10" step="0.1" value="4.2"></div>
+          <div class="sr"><div class="sr-lbl"><span>Tirs Total/M</span><span id="hShotsVal">14.0</span></div><input type="range" id="hShots" min="3" max="25" step="0.5" value="14.0"></div>
+          <div class="sr"><div class="sr-lbl"><span>Buts/Match</span><span id="hGoalsVal">1.4</span></div><input type="range" id="hGoals" min="0.3" max="4" step="0.1" value="1.4"></div>
+          <div class="sr"><div class="sr-lbl"><span>Possession (%)</span><span id="hPossVal">52%</span></div><input type="range" id="hPoss" min="30" max="75" step="1" value="52"></div>
+          <div class="sr"><div class="sr-lbl"><span>Absents Att.</span><span id="hAttAbsVal">0</span></div><input type="range" id="hAttAbs" min="0" max="3" step="1" value="0"></div>
+          <div class="sr"><div class="sr-lbl"><span>Absents DC</span><span id="hDefAbsVal">0</span></div><input type="range" id="hDefAbs" min="0" max="3" step="1" value="0"></div>
+          <div class="sr">
+            <div class="sr-lbl"><span>H2H Victoires</span><span id="hH2HVal" style="color:var(--gold);font-weight:800">6/10</span></div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+                <span style="font-size:8px;color:var(--text3);letter-spacing:1px;font-weight:700">VICTOIRES</span>
+                <input type="number" id="hH2HWins" min="0" max="30" step="1" value="6"
+                  style="width:100%;background:rgba(255,255,255,.06);border:1px solid var(--border2);border-radius:8px;padding:5px 4px;color:var(--gold);font-size:15px;font-weight:800;font-family:var(--mono);outline:none;text-align:center;"
+                  oninput="updateH2H()">
+              </div>
+              <span style="font-size:14px;color:var(--text3);font-weight:900;padding-bottom:2px;">/</span>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+                <span style="font-size:8px;color:var(--text3);letter-spacing:1px;font-weight:700">TOTAL MATCHS</span>
+                <input type="number" id="hH2HTotal" min="1" max="30" step="1" value="10"
+                  style="width:100%;background:rgba(255,255,255,.06);border:1px solid var(--border2);border-radius:8px;padding:5px 4px;color:var(--text);font-size:15px;font-weight:800;font-family:var(--mono);outline:none;text-align:center;"
+                  oninput="updateH2H()">
+              </div>
+            </div>
+            <input type="hidden" id="hH2H" value="0.6">
+          </div>
+          <div class="form-sec">
+            <div class="form-sec-lbl">Forme tous terrains</div>
+            <div class="form-row" id="hFormRow"></div>
+            <div class="form-sec-lbl" style="margin-top:8px">🏠 Forme domicile</div>
+            <div class="form-row" id="hFormHomeRow"></div>
+            <div class="form-mult">Mult. ×<span id="hFormMult">1.00</span></div>
+          </div>
+        </div>
+        <!-- EXTÉRIEUR -->
+        <div>
+          <div class="tcol-hdr" style="background:rgba(41,121,255,.08);color:var(--blue2)">EXTÉRIEUR</div>
+          <div class="sr"><div class="sr-lbl"><span>xG Marqués</span><span id="aXgAttVal">1.40</span></div><input type="range" id="aXgAtt" min="0.3" max="3.5" step="0.05" value="1.40"></div>
+          <div class="sr"><div class="sr-lbl"><span>xG Concédés</span><span id="aXgDefVal">1.05</span></div><input type="range" id="aXgDef" min="0.3" max="2.5" step="0.05" value="1.05"></div>
+          <div class="sr"><div class="sr-lbl"><span>Tirs Cadrés/M</span><span id="aSotVal">3.8</span></div><input type="range" id="aSot" min="1" max="10" step="0.1" value="3.8"></div>
+          <div class="sr"><div class="sr-lbl"><span>Tirs Total/M</span><span id="aShotsVal">11.0</span></div><input type="range" id="aShots" min="3" max="25" step="0.5" value="11.0"></div>
+          <div class="sr"><div class="sr-lbl"><span>Buts/Match</span><span id="aGoalsVal">1.2</span></div><input type="range" id="aGoals" min="0.3" max="4" step="0.1" value="1.2"></div>
+          <div class="sr"><div class="sr-lbl"><span>Possession (%)</span><span id="aPossVal">48%</span></div><input type="range" id="aPoss" min="30" max="75" step="1" value="48"></div>
+          <div class="sr"><div class="sr-lbl"><span>Absents Att.</span><span id="aAttAbsVal">0</span></div><input type="range" id="aAttAbs" min="0" max="3" step="1" value="0"></div>
+          <div class="sr"><div class="sr-lbl"><span>Absents DC</span><span id="aDefAbsVal">1</span></div><input type="range" id="aDefAbs" min="0" max="3" step="1" value="1"></div>
+          <div class="sr">
+            <div class="sr-lbl"><span>H2H Victoires</span><span id="aH2HVal" style="color:var(--blue2);font-weight:800">3/10</span></div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+                <span style="font-size:8px;color:var(--text3);letter-spacing:1px;font-weight:700">VICTOIRES</span>
+                <input type="number" id="aH2HWins" min="0" max="30" step="1" value="3"
+                  style="width:100%;background:rgba(255,255,255,.06);border:1px solid var(--border2);border-radius:8px;padding:5px 4px;color:var(--blue2);font-size:15px;font-weight:800;font-family:var(--mono);outline:none;text-align:center;"
+                  oninput="updateH2H()">
+              </div>
+              <span style="font-size:14px;color:var(--text3);font-weight:900;padding-bottom:2px;">/</span>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+                <span style="font-size:8px;color:var(--text3);letter-spacing:1px;font-weight:700">TOTAL MATCHS</span>
+                <input type="number" id="aH2HTotal" min="1" max="30" step="1" value="10"
+                  style="width:100%;background:rgba(255,255,255,.06);border:1px solid var(--border2);border-radius:8px;padding:5px 4px;color:var(--text);font-size:15px;font-weight:800;font-family:var(--mono);outline:none;text-align:center;"
+                  oninput="updateH2H()">
+              </div>
+            </div>
+            <input type="hidden" id="aH2H" value="0.3">
+          </div>
+          <div class="form-sec">
+            <div class="form-sec-lbl">Forme tous terrains</div>
+            <div class="form-row" id="aFormRow"></div>
+            <div class="form-sec-lbl" style="margin-top:8px">✈️ Forme extérieur</div>
+            <div class="form-row" id="aFormAwayRow"></div>
+            <div class="form-mult">Mult. ×<span id="aFormMult">1.00</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DROITE -->
+  <div style="display:flex;flex-direction:column;gap:14px;">
+
+    <!-- MODÈLE POISSON -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><div class="card-icon" style="background:rgba(124,77,255,.15)">⚙️</div>MODÈLE POISSON (LAMBDA)</div>
+      </div>
+      <div class="card-body">
+        <div class="lambda-row">
+          <div class="lambda-card" style="background:rgba(245,197,24,.07);border:1px solid rgba(245,197,24,.2)">
+            <div class="lc-lbl" style="color:var(--gold)">λ DOMICILE</div>
+            <div class="lc-val" style="color:var(--gold)" id="lambdaHomeVal">—</div>
+            <div class="lc-sub">Buts attendus</div>
+          </div>
+          <div class="lambda-card" style="background:rgba(41,121,255,.07);border:1px solid rgba(41,121,255,.2)">
+            <div class="lc-lbl" style="color:var(--blue2)">λ EXTÉRIEUR</div>
+            <div class="lc-val" style="color:var(--blue2)" id="lambdaAwayVal">—</div>
+            <div class="lc-sub">Buts attendus</div>
+          </div>
+        </div>
+        <div class="sr">
+          <div class="sr-lbl"><span>🏟️ Avantage Domicile</span><span id="homeAdvVal">1.22</span></div>
+          <input type="range" id="homeAdv" min="1.0" max="1.4" step="0.01" value="1.22">
+          <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-top:3px"><span>Neutre 1.00</span><span>Normal 1.15</span><span>Forteresse 1.30</span></div>
+        </div>
+
+        <!-- ── PARAMÈTRES DU MODÈLE ── -->
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:800;letter-spacing:1.5px;color:var(--purple);margin-bottom:10px;display:flex;align-items:center;gap:6px">
+            ⚙️ PARAMÈTRES DU MODÈLE
+          </div>
+          <div class="sr">
+            <div class="sr-lbl">
+              <span>Moyenne ligue (League AVG)</span>
+              <span id="cfgLeagueAvgVal">1.15</span>
+            </div>
+            <input type="range" id="cfgLeagueAvg" min="0.80" max="3.50" step="0.05" value="1.15">
+            <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-top:2px"><span>Défensif (0.80)</span><span>Ligue 1 (1.15)</span><span>Offensif (3.50)</span></div>
+          </div>
+          <div style="font-size:9px;color:var(--text3);margin-top:6px;line-height:1.6">
+            Modèle log-linéaire · Dixon-Coles · Régression 40% fixe
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COTES BOOKMAKER -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><div class="card-icon" style="background:rgba(255,109,0,.15)">💰</div>COTES BOOKMAKER</div>
+        <span style="font-size:10px;color:var(--text3)">Mix <span style="color:var(--gold);font-family:var(--mono);font-weight:700">40%</span> Modèle · <span style="color:var(--blue2);font-family:var(--mono);font-weight:700">60%</span> Book</span>
+      </div>
+      <div class="card-body">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Saisis les cotes 1X2 (Bet365, Unibet…)</div>
+        <div class="odds-grid">
+          <div class="odds-wrap"><div class="odds-lbl" id="oddsHomeLbl">1 (Dom.)</div><input class="odds-input" id="oddHome" type="number" min="1.01" max="20" step="0.01" placeholder="2.10"></div>
+          <div class="odds-wrap"><div class="odds-lbl">X (Nul)</div><input class="odds-input" id="oddDraw" type="number" min="1.01" max="20" step="0.01" placeholder="3.40"></div>
+          <div class="odds-wrap"><div class="odds-lbl" id="oddsAwayLbl">2 (Ext.)</div><input class="odds-input" id="oddAway" type="number" min="1.01" max="20" step="0.01" placeholder="3.20"></div>
+        </div>
+        <div class="blend-info" id="blendInfo">
+          <div class="blend-card"><div class="bc-lbl">1</div><div class="bc-model" id="bm1">—</div><div class="bc-book" id="bb1">—</div><div class="bc-final" id="bf1">—</div></div>
+          <div class="blend-card"><div class="bc-lbl">X</div><div class="bc-model" id="bmN">—</div><div class="bc-book" id="bbN">—</div><div class="bc-final" id="bfN">—</div></div>
+          <div class="blend-card"><div class="bc-lbl">2</div><div class="bc-model" id="bm2">—</div><div class="bc-book" id="bb2">—</div><div class="bc-final" id="bf2">—</div></div>
+        </div>
+        <div style="display:none;gap:6px;font-size:9px;margin-top:5px;justify-content:center" id="blendLegend">
+          <span style="color:var(--blue2)">■ Modèle</span><span style="color:var(--purple)">■ Book</span><span style="color:var(--gold);font-weight:700">■ Final</span>
+        </div>
+        <div class="value-alert" id="valueAlert">
+          <div class="val-title">🎯 VALUE BETS DÉTECTÉS</div>
+          <div id="valueBetList"></div>
+          <div style="font-size:9px;color:var(--text3);margin-top:6px">Edge = modèle − probabilité implicite book</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /droite -->
+</div><!-- /main-grid -->
+
+<!-- RÉSULTATS -->
+<div class="card" style="margin-top:16px">
+  <div class="card-head">
+    <div class="card-title"><div class="card-icon" style="background:rgba(0,230,118,.12)">🏆</div>RÉSULTATS &amp; PRÉDICTIONS</div>
+    <span id="verdict-sub-lbl" style="font-size:10px;color:var(--text3)">Prédiction Modèle Poisson</span>
+  </div>
+  <div class="card-body">
+    <div class="results-top">
+      <!-- Pronostic -->
+      <div class="r-verdict-card" id="verdictBox">
+        <div class="rv-lbl">PRONOSTIC PRINCIPAL</div>
+        <div class="rv-main" id="verdictMain">—</div>
+        <div class="rv-score-lbl">Score le plus probable</div>
+        <div class="rv-score" id="verdictScore">—</div>
+        <div class="rv-conf">
+          <div class="rv-conf-hdr"><span class="rv-conf-lbl">CONFIANCE</span><span class="rv-conf-val" id="confVal">—</span></div>
+          <div class="rv-conf-track"><div class="rv-conf-fill" id="confBar" style="width:0%"></div></div>
+        </div>
+      </div>
+      <!-- Scores -->
+      <div class="r-scores-card">
+        <div class="r-scores-lbl">PROBABILITÉS EXACTES (TOP 5)</div>
+        <div id="scoresGrid"></div>
+      </div>
+      <!-- Résumé -->
+      <div class="r-summary-card">
+        <div class="r-sum-lbl">RÉSUMÉ</div>
+        <div class="sum-row"><span class="sum-k">Total Buts Attendus</span><span class="sum-v" id="sumLambda">—</span></div>
+        <div class="sum-row"><span class="sum-k">Over 2.5</span><span class="sum-v" style="color:var(--blue2)" id="sumOver25">—</span></div>
+        <div class="sum-row"><span class="sum-k">Over 3.5</span><span class="sum-v" style="color:var(--pink)" id="sumOver35">—</span></div>
+        <div class="sum-row"><span class="sum-k">Under 3.5</span><span class="sum-v" style="color:var(--green)" id="sumUnder35">—</span></div>
+        <div class="sum-row"><span class="sum-k">BTTS (Oui)</span><span class="sum-v" style="color:var(--purple)" id="sumBtts">—</span></div>
+        <div class="sum-row"><span class="sum-k">Over 1.5</span><span class="sum-v" style="color:var(--cyan)" id="sumOver15">—</span></div>
+        <div class="sum-row"><span class="sum-k">Under 2.5</span><span class="sum-v" style="color:var(--green)" id="sumUnder25">—</span></div>
+      </div>
+    </div>
+
+    <!-- 1N2 grands chiffres -->
+    <div class="prob-bars-lbl">PROBABILITÉS FINALES (MÉLANGÉES)</div>
+    <div class="prob-1n2">
+      <div class="p1n2-box" style="background:rgba(0,230,118,.06);border-color:rgba(0,230,118,.2)">
+        <div class="p1n2-lbl" style="color:var(--green)">1</div>
+        <div class="p1n2-val" id="winPct">—</div>
+      </div>
+      <div class="p1n2-box" style="background:rgba(245,197,24,.06);border-color:rgba(245,197,24,.2)">
+        <div class="p1n2-lbl" style="color:var(--gold)">X</div>
+        <div class="p1n2-val" id="drawPct">—</div>
+      </div>
+      <div class="p1n2-box" style="background:rgba(255,82,82,.06);border-color:rgba(255,82,82,.2)">
+        <div class="p1n2-lbl" style="color:var(--red)">2</div>
+        <div class="p1n2-val" id="losePct">—</div>
+      </div>
+    </div>
+
+    <div class="sec-div"></div>
+    <div class="prob-bars-lbl">DOUBLES CHANCES</div>
+    <div class="prob-1n2" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="p1n2-box" style="background:rgba(0,229,255,.06);border-color:rgba(0,229,255,.2)">
+        <div class="p1n2-lbl" style="color:var(--cyan)">1X</div>
+        <div class="p1n2-val" id="dc1xPct">—</div>
+      </div>
+      <div class="p1n2-box" style="background:rgba(255,109,0,.06);border-color:rgba(255,109,0,.2)">
+        <div class="p1n2-lbl" style="color:var(--orange)">12</div>
+        <div class="p1n2-val" id="dc12Pct">—</div>
+      </div>
+      <div class="p1n2-box" style="background:rgba(124,77,255,.06);border-color:rgba(124,77,255,.2)">
+        <div class="p1n2-lbl" style="color:var(--purple)">X2</div>
+        <div class="p1n2-val" id="dc2xPct">—</div>
+      </div>
+    </div>
+
+    <div class="sec-div"></div>
+    <div class="prob-bars-lbl">PARIS SUR LES BUTS</div>
+    <div class="prob-row">
+      <div class="prob-hdr"><span class="prob-lbl"><span class="prob-dot" style="background:var(--purple)"></span>BTTS — Les deux équipes scorent</span><span class="prob-val" id="bttsPct">—</span></div>
+      <div class="prob-track"><div class="prob-fill" id="bttsBar" style="background:linear-gradient(90deg,#5b21b6,var(--purple));width:0%"></div></div>
+    </div>
+    <div class="prob-row">
+      <div class="prob-hdr"><span class="prob-lbl"><span class="prob-dot" style="background:var(--cyan)"></span>Over 1.5 buts</span><span class="prob-val" id="over15Pct">—</span></div>
+      <div class="prob-track"><div class="prob-fill" id="over15Bar" style="background:linear-gradient(90deg,#0e7490,var(--cyan));width:0%"></div></div>
+    </div>
+    <div class="prob-row">
+      <div class="prob-hdr"><span class="prob-lbl"><span class="prob-dot" style="background:var(--blue2)"></span>Over 2.5 buts</span><span class="prob-val" id="over25Pct">—</span></div>
+      <div class="prob-track"><div class="prob-fill" id="over25Bar" style="background:linear-gradient(90deg,#1d4ed8,var(--blue2));width:0%"></div></div>
+    </div>
+    <div class="prob-row">
+      <div class="prob-hdr"><span class="prob-lbl"><span class="prob-dot" style="background:var(--green)"></span>Under 2.5 buts</span><span class="prob-val" id="under25Pct">—</span></div>
+      <div class="prob-track"><div class="prob-fill" id="under25Bar" style="background:linear-gradient(90deg,#065f46,var(--green));width:0%"></div></div>
+    </div>
+    <div class="prob-row">
+      <div class="prob-hdr"><span class="prob-lbl"><span class="prob-dot" style="background:var(--pink)"></span>Over 3.5 buts</span><span class="prob-val" id="over35Pct">—</span></div>
+      <div class="prob-track"><div class="prob-fill" id="over35Bar" style="background:linear-gradient(90deg,#7c1d6f,var(--pink));width:0%"></div></div>
+    </div>
+    <div class="prob-row">
+      <div class="prob-hdr"><span class="prob-lbl"><span class="prob-dot" style="background:var(--teal)"></span>Under 3.5 buts</span><span class="prob-val" id="under35Pct">—</span></div>
+      <div class="prob-track"><div class="prob-fill" id="under35Bar" style="background:linear-gradient(90deg,#065f46,var(--teal));width:0%"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- AI -->
+<div class="ai-wrap">
+  <div class="ai-top">
+    <div><div class="ai-title">🤖 Analyse IA</div><div class="ai-sub">Interprétation complète · value bets · facteurs clés</div></div>
+    <div class="ai-btns">
+      <button class="btn-save" id="saveBtn" onclick="saveEntry()">💾 Sauver</button>
+      <button class="btn-img" onclick="exportImage()">📸 Image</button>
+      <button class="btn-run" id="aiBtn" onclick="runAI()">Analyser →</button>
+    </div>
+  </div>
+  <div class="ai-loader" id="aiLoader"><div class="ai-loader-bar"></div></div>
+  <div class="ai-result" id="aiResult"></div>
+  <div class="ai-ph" id="aiPlaceholder">Renseigne les stats Sofascore puis clique Analyser</div>
+</div>
+
+<!-- HISTORY -->
+<div class="hist-wrap" id="historySection">
+  <div class="hist-head">
+    <div class="hist-title">📋 Historique <span id="historyCount" style="font-family:var(--mono);font-size:11px;color:var(--text3)"></span></div>
+    <button class="hist-clear" onclick="clearAll()">Effacer tout</button>
+  </div>
+  <div class="hist-body"><div id="historyList"></div></div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     ONGLET 2 : SCORER PRO
+═══════════════════════════════════════════════════════════════════ -->
+<div id="tabScorer" style="display:none;">
+  <!-- Bandeau λ synchronisés -->
+  <div style="background:rgba(0,230,118,.05);border:1px solid rgba(0,230,118,.18);border-radius:12px;padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="font-size:14px;">⚡</span>
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;letter-spacing:1px;color:var(--green)">λ SYNCHRONISÉS DEPUIS LE PREDICTOR</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:1px">Buts attendus injectés automatiquement · ajustez les sliders si besoin</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <div style="background:rgba(255,77,141,.1);border:1px solid rgba(255,77,141,.25);border-radius:8px;padding:4px 12px;text-align:center;">
+          <div style="font-size:8px;font-weight:800;letter-spacing:1px;color:var(--pink);margin-bottom:1px;">λ DOM</div>
+          <div id="bannerLambdaDom" style="font-family:var(--mono);font-size:14px;font-weight:900;color:var(--pink);">—</div>
+        </div>
+        <div style="background:rgba(0,191,165,.1);border:1px solid rgba(0,191,165,.25);border-radius:8px;padding:4px 12px;text-align:center;">
+          <div style="font-size:8px;font-weight:800;letter-spacing:1px;color:var(--teal);margin-bottom:1px;">λ EXT</div>
+          <div id="bannerLambdaExt" style="font-family:var(--mono);font-size:14px;font-weight:900;color:var(--teal);">—</div>
+        </div>
+        <div style="background:rgba(245,197,24,.08);border:1px solid rgba(245,197,24,.2);border-radius:8px;padding:4px 12px;text-align:center;">
+          <div style="font-size:8px;font-weight:800;letter-spacing:1px;color:var(--gold);margin-bottom:1px;">λ TOTAL</div>
+          <div id="bannerLambdaTotal" style="font-family:var(--mono);font-size:14px;font-weight:900;color:var(--gold);">—</div>
+        </div>
+      </div>
+    </div>
+    <button onclick="switchTab('predictor')" style="background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.25);border-radius:8px;color:var(--green);font-size:10px;font-weight:700;padding:6px 14px;cursor:pointer;font-family:'Barlow',sans-serif;white-space:nowrap;">← Predictor</button>
+  </div>
+
+  <!-- PRESETS SCORER (dans le preset-bar du scorer) -->
+  <!-- PRESETS -->
+<div class="preset-bar">
+  <span class="preset-lbl">MATCH :</span>
+  <button class="preset-btn sc-preset-btn active" data-preset="0">⚡ Lens — Lille</button>
+  <button class="preset-btn sc-preset-btn" data-preset="1">🏟️ PSG — OM</button>
+  <button class="preset-btn sc-preset-btn" data-preset="2">⚽ Lyon — Monaco</button>
+</div>
+
+<!-- MATCH HEADER -->
+<div class="match-hdr">
+  <div class="t-side">
+    <div class="t-icon home">🏠</div>
+    <div class="t-info">
+      <div class="t-lbl">ÉQUIPE DOMICILE</div>
+      <input id="sc_homeNameInput" class="t-input home" type="text" value="RC Lens">
+    </div>
+  </div>
+  <div class="vs-circle">VS</div>
+  <div class="t-side away">
+    <div class="t-icon away">✈️</div>
+    <div class="t-info">
+      <div class="t-lbl" style="text-align:right">ÉQUIPE EXTÉRIEURE</div>
+      <input id="sc_awayNameInput" class="t-input away" type="text" value="LOSC Lille">
+    </div>
+  </div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="main-grid">
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title"><div class="card-icon" style="background:rgba(255,77,141,.15)">🏠</div><span id="sc_homeTeamLbl">RC LENS</span><span id="homePlayerCount" style="margin-left:8px;background:rgba(255,77,141,.12);border:1px solid rgba(255,77,141,.25);border-radius:10px;padding:2px 8px;font-size:9px;font-weight:800;color:var(--pink);font-family:var(--mono);">0 joueurs</span></div>
+    </div>
+    <div class="card-body">
+      <div class="sr"><div class="sr-lbl"><span>λ buts attendus</span><span id="homeLambdaVal">1.55</span></div><input type="range" class="home-slider" id="homeLambda" min="0.3" max="4.0" step="0.05" value="1.55"></div>
+      <div style="height:1px;background:var(--border);margin:10px 0;"></div>
+      <div class="player-list" id="homePlayerList"></div>
+      <button class="add-player-btn" onclick="addPlayer('home')">+ Ajouter un joueur</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title"><div class="card-icon" style="background:rgba(0,191,165,.15)">✈️</div><span id="sc_awayTeamLbl">LOSC LILLE</span><span id="awayPlayerCount" style="margin-left:8px;background:rgba(0,191,165,.12);border:1px solid rgba(0,191,165,.25);border-radius:10px;padding:2px 8px;font-size:9px;font-weight:800;color:var(--teal);font-family:var(--mono);">0 joueurs</span></div>
+    </div>
+    <div class="card-body">
+      <div class="sr"><div class="sr-lbl"><span>λ buts attendus</span><span id="awayLambdaVal">1.25</span></div><input type="range" class="away-slider" id="awayLambda" min="0.3" max="4.0" step="0.05" value="1.25"></div>
+      <div style="height:1px;background:var(--border);margin:10px 0;"></div>
+      <div class="player-list" id="awayPlayerList"></div>
+      <button class="add-player-btn" onclick="addPlayer('away')">+ Ajouter un joueur</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI -->
+<div class="ai-wrap">
+  <div class="ai-top">
+    <div><div class="ai-title">🤖 Analyse IA — Buteurs</div><div class="ai-sub">Pronostics buteurs · value bets · facteurs clés</div></div>
+    <button class="btn-run" id="sc_aiBtn" onclick="sc_runAI()">Analyser →</button>
+  </div>
+  <div class="ai-loader" id="sc_aiLoader"><div class="ai-loader-bar"></div></div>
+  <div class="ai-result" id="sc_aiResult"></div>
+  <div class="ai-ph" id="sc_aiPlaceholder">Renseigne les joueurs puis clique Analyser</div>
+</div>
+
+<!-- BOUTON GÉNÉRER IMAGE -->
+<div style="display:flex;justify-content:center;margin:12px 0 4px;">
+  <div style="display:flex;align-items:center;gap:20px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:14px;padding:10px 24px;">
+    <div style="text-align:center;">
+      <div style="font-size:8px;font-weight:800;letter-spacing:1.5px;color:var(--text3);margin-bottom:3px;">λ TOTAL ATTENDU</div>
+      <div id="scLambdaTotal" style="font-family:var(--mono);font-size:22px;font-weight:900;color:var(--gold);">—</div>
+    </div>
+    <div style="width:1px;height:36px;background:var(--border2);"></div>
+    <div style="text-align:center;">
+      <div style="font-size:8px;font-weight:800;letter-spacing:1.5px;color:var(--pink);margin-bottom:3px;">DOM</div>
+      <div id="scLambdaDom" style="font-family:var(--mono);font-size:16px;font-weight:800;color:var(--pink);">—</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-size:8px;font-weight:800;letter-spacing:1.5px;color:var(--teal);margin-bottom:3px;">EXT</div>
+      <div id="scLambdaExt" style="font-family:var(--mono);font-size:16px;font-weight:800;color:var(--teal);">—</div>
+    </div>
+  </div>
+</div>
+<div class="gen-img-bar">
+  <button class="btn-gen-img" id="btnGenImg" onclick="generateCard()">
+    <span style="font-size:18px">📸</span>
+    <span>Générer l'image résultats</span>
+    <span style="font-size:11px;opacity:.5;font-family:'Barlow',sans-serif;font-weight:600">→ style Kicklytics</span>
+  </button>
+</div>
+
+<!-- CARTE RÉSULTAT (rendue en image) -->
+<div id="resultCard"></div>
+
+</div><!-- /scorer-wrap -->
+
+<!-- MODAL PREVIEW / DOWNLOAD -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <div class="modal-title">📸 Aperçu — Image résultats</div>
+    <div class="modal-img-wrap"><img id="previewImg" src="" alt="preview"></div>
+    <div class="modal-btns">
+      <button class="btn-dl" onclick="downloadImg()">⬇ Télécharger PNG</button>
+      <button class="btn-close-modal" onclick="closeModal()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOOLTIP FORME -->
+<div class="form-tooltip-overlay" id="formOverlay" onclick="closeFormHelp()"></div>
+<div class="form-tooltip" id="formTooltip">
+  <button class="ftt-close" onclick="closeFormHelp()">✕</button>
+  <div class="ftt-title">📈 Coefficient de forme</div>
+  <div class="ftt-row" style="background:rgba(0,230,118,.06);border:1px solid rgba(0,230,118,.12)">
+    <div class="ftt-badge" style="background:rgba(0,230,118,.15);color:#00e676">0.90–1.0</div>
+    <div class="ftt-desc"><strong>En feu</strong> — série de buts, pleine confiance.</div>
+  </div>
+  <div class="ftt-row" style="background:rgba(255,255,255,.02);border:1px solid var(--border)">
+    <div class="ftt-badge" style="background:rgba(92,157,255,.12);color:var(--blue2)">0.70–0.89</div>
+    <div class="ftt-desc"><strong>Forme correcte</strong> — régulier, pas de signal négatif.</div>
+  </div>
+  <div class="ftt-row" style="background:rgba(255,255,255,.02);border:1px solid var(--border)">
+    <div class="ftt-badge" style="background:rgba(245,197,24,.10);color:var(--gold)">0.50–0.69</div>
+    <div class="ftt-desc"><strong>Forme moyenne</strong> — peu de temps de jeu, sans but depuis 5+ matchs.</div>
+  </div>
+  <div class="ftt-row" style="background:rgba(255,82,82,.05);border:1px solid rgba(255,82,82,.12)">
+    <div class="ftt-badge" style="background:rgba(255,82,82,.12);color:var(--red)">0.30–0.49</div>
+    <div class="ftt-desc"><strong>Mauvaise forme</strong> — retour de blessure, méforme évidente.</div>
+  </div>
+  <div class="ftt-sep"></div>
+  <div class="ftt-tip">
+    <span>📌 Bases&nbsp;:</span> buts sur les 5 derniers matchs · temps de jeu · suspension retour<br>
+    <span>📌 Source&nbsp;:</span> Sofascore, FBref · précision 0.05 suffit.
+  </div>
+</div>
+</div>
+
+
+<!-- MODAL EXPORT PREDICTOR -->
+<div id="predExportModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title">📊 Aperçu — Fiche de Prédiction</div>
+    <div class="modal-img-wrap">
+      <img id="predExportImg" src="" alt="Aperçu" style="width:100%;display:block;border-radius:10px;">
+    </div>
+    <div class="modal-btns">
+      <button id="predExportDlBtn" class="btn-dl">⬇️ Télécharger PNG</button>
+      <button class="btn-close-modal" onclick="document.getElementById('predExportModal').classList.remove('open')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer" style="margin-top:24px;">
+  <img src="data:image/png;base64,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" class="footer-logo" alt="Kicklytics">
+  <span class="footer-txt">Les prédictions sont basées sur des modèles statistiques (Poisson) et ne garantissent pas les résultats réels.</span>
+</div>
+
+</div><!-- /main-wrap -->
+
+<!-- ═══════ SCRIPTS ═══════ -->
+<script>
+// ══ PREDICTOR JS ════════════════════════════════════════════════════════════
+
+// ─── Paramètres configurables (lus depuis les sliders de config) ──────────────
+function getConfig(){
+  return {
+    leagueAvg:  gv('cfgLeagueAvg'),
+    regression: 0.40,  // fixé à 40%
+  };
+}
+
+// ─── Forme pondérée exponentielle e^(-α·t), α=0.35, t=0..4 ─────────────────
+const FORM_ALPHA = 0.35;
+const FORM_W = (function(){
+  const raw = [0,1,2,3,4].map(t => Math.exp(-FORM_ALPHA * t));
+  const s = raw.reduce((a,b)=>a+b,0);
+  return raw.map(w => w/s);   // [0.358, 0.252, 0.178, 0.125, 0.088] normalisés
+})();
+
+// ─── Régression vers la moyenne ───────────────────────────────────────────────
+function regressToMean(val, leagueMean, w){
+  return val * (1 - w) + leagueMean * w;
+}
+
+// ─── Modèle Log-Linéaire ──────────────────────────────────────────────────────
+// λ = exp( β0 + β_xg·log(xg) + β_form·forme + β_poss·poss + β_sot·sot + β_abs·abs + β_h2h·h2h + β_adv·adv )
+// Chaque facteur contribue de façon ADDITIVE en espace logarithmique
+// → évite l'emballement multiplicatif
+//
+// Betas calibrés sur distribution Ligue 1 :
+const B = {
+  xg:   0.75,   // xG attaque — facteur dominant
+  def:  0.40,   // xG défense adverse
+  form: 0.18,   // forme (écart par rapport à neutre)
+  poss: 0.10,   // possession (écart par rapport à 50%)
+  sot:  0.12,   // efficacité tirs cadrés (écart par rapport à moyenne)
+  abs:  0.08,   // absences (malus)
+  h2h:  0.06,   // H2H (écart par rapport à 50%)
+  adv:  0.20,   // avantage domicile
+};
+
+function logLinearLambda(xgAtt, xgDef, formMult, poss, sotEff, absAttMalus, absDefBonus, h2hW, isHome, advFactor, cfg){
+  // Terme de base : log de la moyenne de ligue
+  var beta0 = Math.log(cfg.leagueAvg);
+
+  // xG : contribution principale (log-normalisée autour de la moyenne ligue)
+  var xgTerm   = B.xg  * Math.log(Math.max(0.3, xgAtt) / cfg.leagueAvg);
+  // Défense adverse : xG concédé élevé = bonus offensif
+  var defTerm  = B.def * Math.log(Math.max(0.3, xgDef) / cfg.leagueAvg);
+  // Forme : formMult est entre ~0.85 et ~1.15 → log donne ±0.15
+  var formTerm = B.form * Math.log(Math.max(0.5, formMult));
+  // Possession : écart par rapport à 50%, normalisé
+  var possTerm = B.poss * (poss - 50) / 50;
+  // Efficacité tirs cadrés : sotEff est entre 0.85 et 1.15
+  var sotTerm  = B.sot  * Math.log(Math.max(0.5, sotEff));
+  // Absences : malus attaque + bonus vulnérabilité défense adverse
+  var absTerm  = -B.abs * absAttMalus + B.abs * 0.5 * absDefBonus;
+  // H2H : victoires/10 → 0 à 1, centré sur 0.5
+  var h2hTerm  = B.h2h * (h2hW - 0.5);
+  // Avantage domicile uniquement pour l'équipe à domicile
+  var advTerm  = isHome ? B.adv * Math.log(Math.max(1, advFactor)) : 0;
+
+  var logL = beta0 + xgTerm + defTerm + formTerm + possTerm + sotTerm + absTerm + h2hTerm + advTerm;
+
+  return Math.max(0.1, Math.exp(logL));
+}
+
+// ─── Conway-Maxwell-Poisson (CMP) — approx Weibull-Count ─────────────────────
+// P(k; λ, ν) ∝ λ^k / (k!)^ν   avec ν=1.1 (légère sous-dispersion football)
+// ν>1 : comprime la variance → moins de 0-0 extrêmes, moins de 6+ buts
+// Normalisation sur MAX_GOALS=8 (troncature acceptable à <0.1% de masse perdue)
+const CMP_NU = 1.1;
+const CMP_MAX = 9; // grille de normalisation (0..8)
+
+// Cache de la constante de normalisation Z(λ,ν) par λ arrondi à 0.01
+const _cmpCache = {};
+function cmpZ(l) {
+  var key = l.toFixed(2);
+  if (_cmpCache[key]) return _cmpCache[key];
+  var z = 0;
+  for (var j = 0; j < CMP_MAX; j++) {
+    var lf = 0; for (var i = 1; i <= j; i++) lf += Math.log(i); // log(j!)
+    z += Math.exp(j * Math.log(Math.max(1e-9, l)) - CMP_NU * lf);
+  }
+  _cmpCache[key] = z;
+  return z;
+}
+
+function poissonPMF(l, k) {
+  if (l <= 0) return k === 0 ? 1 : 0;
+  if (k < 0 || k >= CMP_MAX) return 0;
+  var lf = 0; for (var i = 1; i <= k; i++) lf += Math.log(i); // log(k!)
+  var logP = k * Math.log(l) - CMP_NU * lf;
+  return Math.exp(logP) / cmpZ(l);
+}
+
+// ─── Correction de Dixon-Coles ────────────────────────────────────────────────
+// ─── Dixon-Coles ρ dynamique (Karlis-Ntzoufras approximation) ─────────────────
+// ρ augmente quand les λ sont faibles (matchs défensifs → sur-représentation 0-0/1-1)
+// ρ ∈ [0.04, 0.18] borné pour rester dans le domaine valide
+function estimateRho(lH, lA) {
+  // Approximation MLE calibrée sur données L1 2018-2024
+  var rho = 0.06 + 0.09 * Math.exp(-0.55 * (lH + lA));
+  return Math.min(0.18, Math.max(0.04, rho));
+}
+function dixonColesCorr(h,a,lH,lA){
+  var rho = estimateRho(lH, lA);
+  // Contrainte de validité : 1 - lH*lA*ρ > 0 → ρ < 1/(lH*lA)
+  rho = Math.min(rho, 0.99 / Math.max(0.01, lH * lA));
+  if(h===0&&a===0) return 1 - lH*lA*rho;
+  if(h===1&&a===0) return 1 + lA*rho;
+  if(h===0&&a===1) return 1 + lH*rho;
+  if(h===1&&a===1) return 1 - rho;
+  return 1;
+}
+
+function calc(lH,lA,cfg){
+  // Régression vers la moyenne sur les λ finaux
+  var lHr = regressToMean(lH, cfg.leagueAvg, cfg.regression);
+  var lAr = regressToMean(lA, cfg.leagueAvg, cfg.regression);
+  lHr = Math.max(0.1, lHr);
+  lAr = Math.max(0.1, lAr);
+
+  let win=0,draw=0,lose=0,btts=0,o15=0,o25=0,o35=0;
+  const sc=[];
+  for(let h=0;h<=8;h++) for(let a=0;a<=8;a++){
+    var p=poissonPMF(lHr,h)*poissonPMF(lAr,a)*dixonColesCorr(h,a,lHr,lAr);
+    if(h>a) win+=p; else if(h===a) draw+=p; else lose+=p;
+    if(h>=1&&a>=1) btts+=p;
+    if(h+a>=2) o15+=p;
+    if(h+a>=3) o25+=p;
+    if(h+a>=4) o35+=p;
+    sc.push({h,a,p});
+  }
+  var total=win+draw+lose;
+  win/=total; draw/=total; lose/=total;
+  btts/=total; o15/=total; o25/=total; o35/=total;
+  sc.sort((x,y)=>y.p-x.p);
+  sc.forEach(s=>{s.p/=total;});
+  return{win:win*100,draw:draw*100,lose:lose*100,btts:btts*100,o15:o15*100,o25:o25*100,u25:(1-o25)*100,o35:o35*100,u35:(1-o35)*100,
+    dc1x:(win+draw)*100,dc12:(win+lose)*100,dc2x:(draw+lose)*100,sc:sc.slice(0,6),lHr,lAr};
+}
+
+function fMult(fGeneral,fSpecific){
+  const gen=0.85+fGeneral.reduce((a,x,i)=>a+x*FORM_W[i],0)*0.30;
+  const spec=0.85+fSpecific.reduce((a,x,i)=>a+x*FORM_W[i],0)*0.30;
+  return gen*0.30+spec*0.70;
+}
+function absMalus(att,def){return{att:att*0.06, def:def*0.08};}  // retourne les malus bruts (pas les coefs)
+function shotEff(sot,g){
+  if(!sot||!g) return 1.0;
+  return Math.max(0.85,Math.min(1.15,(g/sot)/0.30));
+}
+function h2hRatio(w){return w;}  // w est déjà un ratio 0-1
+function possVal(pct){return pct;}
+function oddsToProb(o1,oN,o2){
+  if(!o1||!oN||!o2||o1<1.01||oN<1.01||o2<1.01) return null;
+  const ov=1/o1+1/oN+1/o2;
+  return{win:(1/o1)/ov*100,draw:(1/oN)/ov*100,lose:(1/o2)/ov*100,margin:(ov-1)*100};
+}
+function blendProbs(m,b,w){return{win:m.win*w+b.win*(1-w),draw:m.draw*w+b.draw*(1-w),lose:m.lose*w+b.lose*(1-w)};}
+const VALUE_THRESHOLD=3.0;
+function findValueBets(fp,bp,o1,oN,o2,hS,aS){
+  return[
+    {label:'1 — Victoire '+hS,modelP:fp.win, bookP:bp.win, cote:o1,edge:fp.win-bp.win},
+    {label:'X — Match nul',   modelP:fp.draw,bookP:bp.draw,cote:oN,edge:fp.draw-bp.draw},
+    {label:'2 — Victoire '+aS,modelP:fp.lose,bookP:bp.lose,cote:o2,edge:fp.lose-bp.lose},
+  ];
+}
+
+// ─── Presets ──────────────────────────────────────────────────────────────────
+const PRESETS=[
+  {home:"RC Lens",away:"LOSC Lille",hXgAtt:1.55,hXgDef:0.95,hForm:[1,1,.5,1,0],hFormHome:[1,1,1,.5,1],hAttAbs:0,hDefAbs:0,hSot:4.2,hShots:14.0,hGoals:1.4,hPoss:52,hH2H:6,aXgAtt:1.40,aXgDef:1.05,aForm:[1,0,1,.5,1],aFormAway:[0,1,0,.5,1],aAttAbs:0,aDefAbs:1,aSot:3.8,aShots:11.0,aGoals:1.2,aPoss:48,aH2H:3,homeAdv:1.22},
+  {home:"PSG",away:"OM",hXgAtt:2.10,hXgDef:0.70,hForm:[1,1,1,1,.5],hFormHome:[1,1,1,1,1],hAttAbs:0,hDefAbs:0,hSot:6.1,hShots:18.0,hGoals:2.2,hPoss:63,hH2H:7,aXgAtt:1.50,aXgDef:1.15,aForm:[0,1,1,0,1],aFormAway:[0,1,0,1,0],aAttAbs:1,aDefAbs:0,aSot:4.0,aShots:11.0,aGoals:1.3,aPoss:48,aH2H:2,homeAdv:1.15},
+  {home:"Lyon",away:"Monaco",hXgAtt:1.45,hXgDef:1.10,hForm:[.5,1,0,1,.5],hFormHome:[1,1,0,.5,1],hAttAbs:1,hDefAbs:0,hSot:3.5,hShots:12.0,hGoals:1.2,hPoss:50,hH2H:4,aXgAtt:1.65,aXgDef:0.90,aForm:[1,1,1,0,1],aFormAway:[1,1,1,1,.5],aAttAbs:0,aDefAbs:0,aSot:4.8,aShots:14.0,aGoals:1.8,aPoss:51,aH2H:5,homeAdv:1.15},
+];
+
+let ST={hForm:[1,1,.5,1,0],hFormHome:[1,1,1,.5,1],aForm:[1,0,1,.5,1],aFormAway:[0,1,0,.5,1]};
+let _data=null;
+
+// ─── Form buttons ─────────────────────────────────────────────────────────────
+const CYCLE={1:.5,.5:0,0:1};
+const FMAP={1:'V',.5:'N',0:'D'};
+const FCOL={1:'#22c55e',.5:'#facc15',0:'#ef4444'};
+const // Labels form avec poids exponentiel affiché
+const FLBL = (function(){
+  return FORM_W.map(function(w, i){
+    return 'M-'+(i+1)+'·'+Math.round(w*100)+'%';
+  });
+})();
+
+function renderForm(rowId,formKey){
+  const form=ST[formKey];
+  const row=document.getElementById(rowId);
+  row.innerHTML='';
+  form.forEach((val,i)=>{
+    const b=document.createElement('button');
+    b.className='form-btn';
+    b.style.background=FCOL[val]+'33';
+    b.style.color=FCOL[val];
+    b.style.borderBottom='2px solid '+FCOL[val];
+    b.innerHTML='<span class="form-sub">'+FLBL[i]+'</span>'+FMAP[val];
+    b.onclick=function(){ST[formKey][i]=CYCLE[val];renderForm(rowId,formKey);update();};
+    row.appendChild(b);
+  });
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function gv(id){return parseFloat(document.getElementById(id).value);}
+function gvr(id){return document.getElementById(id).value;}
+function sv(id,val){document.getElementById(id).value=val;}
+function tx(id,txt){var e=document.getElementById(id);if(e)e.textContent=txt;}
+function setBar(pctId,barId,val,rowId,hl){
+  tx(pctId,val.toFixed(1)+'%');
+  var bar=document.getElementById(barId);
+  if(bar) setTimeout(function(){bar.style.width=Math.min(val,100)+'%';},30);
+  if(rowId){var r=document.getElementById(rowId);if(r){if(hl)r.classList.add('hl');else r.classList.remove('hl');}}
+}
+
+// ─── UPDATE ───────────────────────────────────────────────────────────────────
+function update(){
+  var hName=document.getElementById('homeNameInput').value||'Dom';
+  var aName=document.getElementById('awayNameInput').value||'Ext';
+  var hS=hName.split(' ').pop();
+  var aS=aName.split(' ').pop();
+
+  // Odds labels
+  tx('oddsHomeLbl','1 — '+hS);
+  tx('oddsAwayLbl','2 — '+aS);
+
+  // Mix weight
+  // Mix fixé : 40% modèle / 60% bookmaker
+  var mixW = 0.40;
+
+  // ── Modèle Log-Linéaire ────────────────────────────────────────────────────
+  var cfg = getConfig();
+  var hFm=fMult(ST.hForm,ST.hFormHome), aFm=fMult(ST.aForm,ST.aFormAway);
+  var hAb=absMalus(gv('hAttAbs'),gv('hDefAbs')), aAb=absMalus(gv('aAttAbs'),gv('aDefAbs'));
+  var hSe=shotEff(gv('hSot'),gv('hGoals')),  aSe=shotEff(gv('aSot'),gv('aGoals'));
+
+  var lH = logLinearLambda(
+    gv('hXgAtt'), gv('aXgDef'), hFm,
+    gv('hPoss'), hSe,
+    hAb.att, aAb.def,        // absences att dom + absences DC ext
+    h2hRatio(gv('hH2H')),
+    true, gv('homeAdv'), cfg
+  );
+  var lA = logLinearLambda(
+    gv('aXgAtt'), gv('hXgDef'), aFm,
+    gv('aPoss'), aSe,
+    aAb.att, hAb.def,        // absences att ext + absences DC dom
+    h2hRatio(gv('aH2H')),
+    false, gv('homeAdv'), cfg
+  );
+
+  tx('hFormMult',hFm.toFixed(2)); tx('aFormMult',aFm.toFixed(2));
+  // lambdaHomeVal / lambdaAwayVal sont mis à jour après calc() avec les λ régressés
+  tx('hXgAttVal',gv('hXgAtt').toFixed(2)); tx('hXgDefVal',gv('hXgDef').toFixed(2));
+  tx('aXgAttVal',gv('aXgAtt').toFixed(2)); tx('aXgDefVal',gv('aXgDef').toFixed(2));
+  tx('hAttAbsVal',gv('hAttAbs').toFixed(0)); tx('hDefAbsVal',gv('hDefAbs').toFixed(0));
+  tx('aAttAbsVal',gv('aAttAbs').toFixed(0)); tx('aDefAbsVal',gv('aDefAbs').toFixed(0));
+  tx('hSotVal',gv('hSot').toFixed(1)); tx('hGoalsVal',gv('hGoals').toFixed(1));
+  tx('hShotsVal',gv('hShots').toFixed(1));
+  tx('hPossVal',gv('hPoss').toFixed(0)+'%');
+  /* hH2HVal mis à jour par updateH2H() */
+  tx('aSotVal',gv('aSot').toFixed(1)); tx('aGoalsVal',gv('aGoals').toFixed(1));
+  tx('aShotsVal',gv('aShots').toFixed(1));
+  tx('aPossVal',gv('aPoss').toFixed(0)+'%');
+  /* aH2HVal mis à jour par updateH2H() */
+  tx('homeAdvVal',gv('homeAdv').toFixed(2));
+  // Config display
+  tx('cfgLeagueAvgVal',cfg.leagueAvg.toFixed(2));
+
+  var r=calc(lH,lA,cfg);
+  var modelProbs={win:r.win,draw:r.draw,lose:r.lose};
+
+  // Afficher les λ régressés (après régression vers la moyenne)
+  tx('lambdaHomeVal',r.lHr.toFixed(2));
+  tx('lambdaAwayVal',r.lAr.toFixed(2));
+
+  // Bookmaker
+  var o1=parseFloat(gvr('oddHome'))||0;
+  var oN=parseFloat(gvr('oddDraw'))||0;
+  var o2=parseFloat(gvr('oddAway'))||0;
+  var bookProbs=oddsToProb(o1,oN,o2);
+  var finalProbs=modelProbs;
+  var hasBook=false;
+
+  if(bookProbs){
+    hasBook=true;
+    finalProbs=blendProbs(modelProbs,bookProbs,mixW);
+    document.getElementById('blendInfo').style.display='grid';
+    document.getElementById('blendLegend').style.display='flex';
+    tx('bm1',modelProbs.win.toFixed(1)+'%'); tx('bmN',modelProbs.draw.toFixed(1)+'%'); tx('bm2',modelProbs.lose.toFixed(1)+'%');
+    tx('bb1',bookProbs.win.toFixed(1)+'%'); tx('bbN',bookProbs.draw.toFixed(1)+'%'); tx('bb2',bookProbs.lose.toFixed(1)+'%');
+    tx('bf1',finalProbs.win.toFixed(1)+'%'); tx('bfN',finalProbs.draw.toFixed(1)+'%'); tx('bf2',finalProbs.lose.toFixed(1)+'%');
+    var vbets=findValueBets(finalProbs,bookProbs,o1,oN,o2,hS,aS);
+    var hasValue=vbets.some(function(b){return b.edge>=VALUE_THRESHOLD;});
+    var alert=document.getElementById('valueAlert');
+    if(hasValue){
+      alert.classList.add('show');
+      document.getElementById('valueBetList').innerHTML=vbets.map(function(b){
+        var isV=b.edge>=VALUE_THRESHOLD;
+        var eStr=(b.edge>=0?'+':'')+b.edge.toFixed(1)+'%';
+        return '<div class="value-bet" style="'+(isV?'':'opacity:.4')+'">'
+          +'<div><span class="vb-label">'+b.label+'</span>'
+          +(isV?'<span style="font-size:9px;color:var(--gold);margin-left:6px">★ VALUE</span>':'')
+          +'<div style="font-size:9px;color:var(--text3);margin-top:1px">Cote: <strong>'+b.cote+'</strong> · Modèle: '+b.modelP.toFixed(1)+'% · Book: '+b.bookP.toFixed(1)+'%</div></div>'
+          +'<span class="vb-edge '+(b.edge>=VALUE_THRESHOLD?'pos':'neg')+'">'+eStr+'</span></div>';
+      }).join('');
+    } else { alert.classList.remove('show'); }
+  } else {
+    document.getElementById('blendInfo').style.display='none';
+    document.getElementById('blendLegend').style.display='none';
+    document.getElementById('valueAlert').classList.remove('show');
+  }
+
+  // Verdict
+  var mx=Math.max(finalProbs.win,finalProbs.draw,finalProbs.lose);
+  var vl,vc;
+  if(finalProbs.win===mx){vl='1 ('+hS.toUpperCase()+')';vc='#00e676';}
+  else if(finalProbs.lose===mx){vl='2 ('+aS.toUpperCase()+')';vc='#ff5252';}
+  else{vl='X (NUL)';vc='#f5c518';}
+
+  var vb=document.getElementById('verdictBox');
+  vb.style.background=vc+'12'; vb.style.borderColor=vc+'35';
+  var vm=document.getElementById('verdictMain');
+  vm.textContent=vl; vm.style.color=vc;
+  document.getElementById('verdictScore').textContent=r.sc[0].h+' – '+r.sc[0].a;
+
+  var conf=Math.max(finalProbs.win,finalProbs.draw,finalProbs.lose);
+  tx('confVal',conf.toFixed(1)+'%');
+  setTimeout(function(){document.getElementById('confBar').style.width=Math.min(conf,100)+'%';},30);
+
+  tx('verdict-sub-lbl',hasBook?'Prédiction Finale (40% modèle · 60% book)':'Prédiction Modèle Poisson');
+
+  // Summary
+  tx('sumLambda',(lH+lA).toFixed(2));
+  // Afficher ρ DC et rappel ν CMP
+  var rhoDisplay = estimateRho(r.lHr, r.lAr);
+  if(document.getElementById('sumRho')) document.getElementById('sumRho').textContent = 'ρ=' + rhoDisplay.toFixed(3) + ' · ν=' + CMP_NU.toFixed(1);
+  tx('sumOver25',r.o25.toFixed(1)+'%');
+  tx('sumBtts',r.btts.toFixed(1)+'%');
+  tx('sumOver15',r.o15.toFixed(1)+'%');
+  tx('sumUnder25',r.u25.toFixed(1)+'%');
+  if(document.getElementById('sumOver35')) tx('sumOver35',r.o35.toFixed(1)+'%');
+  if(document.getElementById('sumUnder35')) tx('sumUnder35',r.u35.toFixed(1)+'%');
+
+  // 1N2
+  tx('winPct',finalProbs.win.toFixed(1)+'%');
+  tx('drawPct',finalProbs.draw.toFixed(1)+'%');
+  tx('losePct',finalProbs.lose.toFixed(1)+'%');
+
+  // Doubles chances (depuis les probas finales)
+  var dc1x=finalProbs.win+finalProbs.draw;
+  var dc12=finalProbs.win+finalProbs.lose;
+  var dc2x=finalProbs.draw+finalProbs.lose;
+  tx('dc1xPct',dc1x.toFixed(1)+'%');
+  tx('dc12Pct',dc12.toFixed(1)+'%');
+  tx('dc2xPct',dc2x.toFixed(1)+'%');
+
+  // Buts bars
+  setBar('bttsPct','bttsBar',r.btts);
+  setBar('over15Pct','over15Bar',r.o15);
+  setBar('over25Pct','over25Bar',r.o25);
+  setBar('under25Pct','under25Bar',r.u25);
+  if(document.getElementById('over35Pct')) setBar('over35Pct','over35Bar',r.o35);
+  if(document.getElementById('under35Pct')) setBar('under35Pct','under35Bar',r.u35);
+
+  // Scores
+  var sg=document.getElementById('scoresGrid');
+  var maxP=r.sc[0].p;
+  sg.innerHTML=r.sc.slice(0,5).map(function(s){
+    var pct=(s.p*100).toFixed(1);
+    var bw=(s.p/maxP*100).toFixed(0);
+    return '<div class="sc-row"><span class="sc-tag">'+s.h+'–'+s.a+'</span><div class="sc-track"><div class="sc-fill" style="width:'+bw+'%"></div></div><span class="sc-pct">'+pct+'%</span></div>';
+  }).join('');
+
+  _data={hName,aName,lH,lA,lHr:r.lHr,lAr:r.lAr,hFm,aFm,hSe,aSe,r,hS,aS,
+    finalProbs,modelProbs,bookProbs,hasBook,mixW,o1,oN,o2,
+    dc1x:finalProbs.win+finalProbs.draw,
+    dc12:finalProbs.win+finalProbs.lose,
+    dc2x:finalProbs.draw+finalProbs.lose,
+    hFs:ST.hForm.map(function(x){return x===1?'V':x===.5?'N':'D'}).join('-'),
+    hFsHome:ST.hFormHome.map(function(x){return x===1?'V':x===.5?'N':'D'}).join('-'),
+    aFs:ST.aForm.map(function(x){return x===1?'V':x===.5?'N':'D'}).join('-'),
+    aFsAway:ST.aFormAway.map(function(x){return x===1?'V':x===.5?'N':'D'}).join('-')
+  };
+}
+
+// ─── Presets ──────────────────────────────────────────────────────────────────
+document.querySelectorAll('.pred-preset-btn').forEach(function(btn){
+  btn.onclick=function(){
+    document.querySelectorAll('.pred-preset-btn').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    var p=PRESETS[+btn.dataset.preset];
+    document.getElementById('homeNameInput').value=p.home;
+    document.getElementById('awayNameInput').value=p.away;
+    sv('hXgAtt',p.hXgAtt);sv('hXgDef',p.hXgDef);sv('aXgAtt',p.aXgAtt);sv('aXgDef',p.aXgDef);
+    ST.hForm=[...p.hForm];ST.hFormHome=[...p.hFormHome];
+    ST.aForm=[...p.aForm];ST.aFormAway=[...p.aFormAway];
+    sv('hAttAbs',p.hAttAbs);sv('hDefAbs',p.hDefAbs);sv('aAttAbs',p.aAttAbs);sv('aDefAbs',p.aDefAbs);
+    sv('hSot',p.hSot);sv('hShots',p.hShots);sv('hGoals',p.hGoals);sv('hPoss',p.hPoss);
+    // H2H: les presets stockent le nombre de victoires (sur 10), on init W=val, N=10
+    document.getElementById('hH2HWins').value=p.hH2H;
+    document.getElementById('hH2HTotal').value=10;
+    sv('hH2H',p.hH2H/10);
+    document.getElementById('hH2HVal').textContent=p.hH2H+'/10';
+    sv('aSot',p.aSot);sv('aShots',p.aShots);sv('aGoals',p.aGoals);sv('aPoss',p.aPoss);
+    document.getElementById('aH2HWins').value=p.aH2H;
+    document.getElementById('aH2HTotal').value=10;
+    sv('aH2H',p.aH2H/10);
+    document.getElementById('aH2HVal').textContent=p.aH2H+'/10';
+    sv('homeAdv',p.homeAdv);
+    sv('oddHome','');sv('oddDraw','');sv('oddAway','');
+    renderForm('hFormRow','hForm');renderForm('hFormHomeRow','hFormHome');
+    renderForm('aFormRow','aForm');renderForm('aFormAwayRow','aFormAway');
+    document.getElementById('aiResult').style.display='none';
+    document.getElementById('aiPlaceholder').style.display='block';
+    update();
+  };
+});
+
+// ─── AI ───────────────────────────────────────────────────────────────────────
+async function runAI(){
+  if(!_data) return;
+  var d=_data;
+  var btn=document.getElementById('aiBtn');
+  var loader=document.getElementById('aiLoader');
+  var result=document.getElementById('aiResult');
+  document.getElementById('aiPlaceholder').style.display='none';
+  btn.disabled=true; btn.textContent='⏳ Analyse...';
+  loader.style.display='block'; result.style.display='none';
+
+  var bookSection=d.hasBook?
+    'COTES (démarginées) : 1='+d.bookProbs.win.toFixed(1)+'% X='+d.bookProbs.draw.toFixed(1)+'% 2='+d.bookProbs.lose.toFixed(1)+'% (marge: '+d.bookProbs.margin.toFixed(1)+'%)\nCotes brutes : 1='+d.o1+' X='+d.oN+' 2='+d.o2+'\nPROBAS FINALES : 1='+d.finalProbs.win.toFixed(1)+'% X='+d.finalProbs.draw.toFixed(1)+'% 2='+d.finalProbs.lose.toFixed(1)+'%\nValue bets (edge >3%) : '+findValueBets(d.finalProbs,d.bookProbs,d.o1,d.oN,d.o2,d.hS,d.aS).filter(function(b){return b.edge>=3;}).map(function(b){return b.label+' edge +'+b.edge.toFixed(1)+'%';}).join(', ')||'aucun':
+    'PROBAS MODÈLE : 1='+d.modelProbs.win.toFixed(1)+'% X='+d.modelProbs.draw.toFixed(1)+'% 2='+d.modelProbs.lose.toFixed(1)+'%';
+
+  var prompt='Tu es un analyste football expert. Analyse ce match (130 mots max) :\n'
+    +'DOMICILE : '+d.hName+'\n'
+    +'- xG att: '+gv('hXgAtt').toFixed(2)+' | xG def: '+gv('hXgDef').toFixed(2)+'\n'
+    +'- Forme: '+d.hFs+' | Dom: '+d.hFsHome+' → ×'+d.hFm.toFixed(2)+'\n'
+    +'- Possession: '+gv('hPoss').toFixed(0)+'% | Tirs/m: '+gv('hShots').toFixed(1)+' | Absences: '+gv('hAttAbs')+' att, '+gv('hDefAbs')+' DC\n'
+    +'- λ brut='+d.lH.toFixed(2)+' → λ régressé='+d.lHr.toFixed(2)+' buts attendus (Dixon-Coles)\n'
+    +'EXTÉRIEUR : '+d.aName+'\n'
+    +'- xG att: '+gv('aXgAtt').toFixed(2)+' | xG def: '+gv('aXgDef').toFixed(2)+'\n'
+    +'- Forme: '+d.aFs+' | Ext: '+d.aFsAway+' → ×'+d.aFm.toFixed(2)+'\n'
+    +'- Possession: '+gv('aPoss').toFixed(0)+'% | Tirs/m: '+gv('aShots').toFixed(1)+' | Absences: '+gv('aAttAbs')+' att, '+gv('aDefAbs')+' DC\n'
+    +'- λ brut='+d.lA.toFixed(2)+' → λ régressé='+d.lAr.toFixed(2)+' buts attendus (Dixon-Coles)\n'
+    +bookSection+'\n'
+    +'BTTS:'+d.r.btts.toFixed(1)+'% O1.5:'+d.r.o15.toFixed(1)+'% O2.5:'+d.r.o25.toFixed(1)+'%\n'
+    +'Score probable: '+d.r.sc[0].h+'-'+d.r.sc[0].a+'\n'
+    +'1 facteur décisif, 1 pronostic principal'+(d.hasBook?' et avis sur value bet':'')+', 1 pari secondaire. Direct.';
+
+  try{
+    var res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+    });
+    var data=await res.json();
+    var text=data.content&&data.content.find(function(b){return b.type==='text';});
+    result.textContent=text?text.text:'Analyse indisponible.';
+    result.style.display='block';
+  }catch(e){result.textContent='Erreur réseau.';result.style.display='block';}
+  loader.style.display='none'; btn.disabled=false; btn.textContent='Analyser →';
+}
+
+// ─── Export Image ─────────────────────────────────────────────────────────────
+const LOGO_CANVAS='data:image/png;base64,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';
+
+function exportImage(){
+  if(!_data) return;
+  var d=_data, r=d.r, fp=d.finalProbs;
+
+  var W=600, H=900;
+  var cv=document.createElement('canvas');
+  cv.width=W*2; cv.height=H*2;
+  var c=cv.getContext('2d');
+  c.scale(2,2);
+
+  // ── Fond dégradé ──
+  var bg=c.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#070b18'); bg.addColorStop(1,'#0a0f22');
+  c.fillStyle=bg; c.fillRect(0,0,W,H);
+  // Halos
+  var hg=c.createRadialGradient(W/2,0,0,W/2,0,300);
+  hg.addColorStop(0,'rgba(41,121,255,.12)'); hg.addColorStop(1,'rgba(0,0,0,0)');
+  c.fillStyle=hg; c.fillRect(0,0,W,H);
+
+  // ─────────────────────────────────────────────────────────────
+  // HEADER : noms équipes
+  // ─────────────────────────────────────────────────────────────
+  c.fillStyle='rgba(255,255,255,.06)'; rr(c,16,12,W-32,68,16); c.fill();
+  c.strokeStyle='rgba(100,120,255,.25)'; c.lineWidth=1; rr(c,16,12,W-32,68,16); c.stroke();
+
+  c.font='800 26px Barlow Condensed,sans-serif';
+  c.fillStyle='#f5c518'; c.textAlign='left'; c.fillText(d.hName, 30, 54);
+
+  // Badge VS
+  c.fillStyle='rgba(255,255,255,.10)';
+  c.beginPath(); c.arc(W/2,46,22,0,Math.PI*2); c.fill();
+  c.strokeStyle='rgba(100,120,255,.3)'; c.lineWidth=1;
+  c.beginPath(); c.arc(W/2,46,22,0,Math.PI*2); c.stroke();
+  c.font='700 12px Barlow Condensed,sans-serif'; c.fillStyle='rgba(255,255,255,.7)'; c.textAlign='center'; c.fillText('VS',W/2,51);
+
+  c.font='800 26px Barlow Condensed,sans-serif';
+  c.fillStyle='#5c9dff'; c.textAlign='right'; c.fillText(d.aName, W-30, 54);
+
+  // ─────────────────────────────────────────────────────────────
+  // SECTION 1 : CONFIANCE DES PARIS (BTTS / O1.5 / O2.5)
+  // ─────────────────────────────────────────────────────────────
+  var s1y=100;
+  // Titre section
+  c.font='700 13px Barlow Condensed,sans-serif'; c.fillStyle='rgba(255,255,255,.5)'; c.textAlign='center';
+  c.fillText('🛡  CONFIANCE DES PARIS', W/2, s1y+14);
+  c.font='500 10px Barlow,sans-serif'; c.fillStyle='rgba(255,255,255,.25)';
+  c.fillText('Probabilité que le pari soit gagnant', W/2, s1y+30);
+
+  var buts=[
+    {lbl:'BTTS',sub:'Les 2 équipes marquent',val:r.btts,c:'#9b6bff',g:['#4c1d95','#7c3aed'],border:'#7c3aed'},
+    {lbl:'O 1.5',sub:'Plus de 1.5 buts',val:r.o15,c:'#00e5ff',g:['#0e7490','#06b6d4'],border:'#06b6d4'},
+    {lbl:'O 2.5',sub:'Plus de 2.5 buts',val:r.o25,c:'#3b82f6',g:['#1e3a8a','#2563eb'],border:'#3b82f6'},
+  ];
+  drawSection(c, buts, 24, s1y+40, W-48, 200, 8);
+
+  // ─────────────────────────────────────────────────────────────
+  // SECTION 2 : DOUBLES CHANCES
+  // ─────────────────────────────────────────────────────────────
+  var dc1x=fp.win+fp.draw, dc12=fp.win+fp.lose, dc2x=fp.draw+fp.lose;
+  var s2y=s1y+260;
+  c.font='700 13px Barlow Condensed,sans-serif'; c.fillStyle='rgba(255,255,255,.5)'; c.textAlign='center';
+  c.fillText('🛡  DOUBLES CHANCES', W/2, s2y+14);
+
+  var dcs=[
+    {lbl:'1X',sub:'Dom. ou Nul',val:dc1x,c:'#00e5ff',g:['#0e7490','#06b6d4'],border:'#06b6d4'},
+    {lbl:'12',sub:'Dom. ou Ext.',val:dc12,c:'#f97316',g:['#7c2d12','#c2410c'],border:'#f97316'},
+    {lbl:'X2',sub:'Nul ou Ext.',val:dc2x,c:'#a78bfa',g:['#4c1d95','#7c3aed'],border:'#7c3aed'},
+  ];
+  drawSection(c, dcs, 24, s2y+28, W-48, 200, 8);
+
+  // ─────────────────────────────────────────────────────────────
+  // SCORE LE PLUS PROBABLE
+  // ─────────────────────────────────────────────────────────────
+  var scy=s2y+248;
+  c.fillStyle='rgba(255,255,255,.04)'; rr(c,24,scy,W-48,62,12); c.fill();
+  c.strokeStyle='rgba(100,120,255,.2)'; c.lineWidth=1; rr(c,24,scy,W-48,62,12); c.stroke();
+  // Icon
+  c.font='22px sans-serif'; c.textAlign='left'; c.fillText('🎯',36,scy+40);
+  c.font='600 10px Barlow,sans-serif'; c.fillStyle='rgba(255,255,255,.35)'; c.textAlign='center';
+  c.fillText('SCORE LE PLUS PROBABLE', W/2+20, scy+20);
+  c.font='800 32px Barlow Condensed,sans-serif';
+  var scoreGrad=c.createLinearGradient(W/2-40,0,W/2+80,0);
+  scoreGrad.addColorStop(0,'#f5c518'); scoreGrad.addColorStop(1,'#f97316');
+  c.fillStyle=scoreGrad; c.textAlign='center'; c.fillText(r.sc[0].h+' – '+r.sc[0].a, W/2+20, scy+50);
+  c.font='600 11px Barlow,sans-serif'; c.fillStyle='rgba(255,255,255,.3)';
+  c.fillText('('+(r.sc[0].p*100).toFixed(1)+'%)', W/2+76, scy+50);
+
+  // ─────────────────────────────────────────────────────────────
+  // VAINQUEUR PRÉDIT
+  // ─────────────────────────────────────────────────────────────
+  var vwy=scy+76;
+  var verd=fp.win>fp.draw&&fp.win>fp.lose
+    ?{t:d.hName.toUpperCase(),lbl:'VAINQUEUR PRÉDIT',c:'#00e676',g:['#064e3b','#065f46'],pct:fp.win}
+    :fp.lose>fp.draw&&fp.lose>fp.win
+    ?{t:d.aName.toUpperCase(),lbl:'VAINQUEUR PRÉDIT',c:'#34d399',g:['#064e3b','#065f46'],pct:fp.lose}
+    :{t:'MATCH NUL',lbl:'RÉSULTAT PRÉDIT',c:'#f5c518',g:['#78350f','#92400e'],pct:fp.draw};
+
+  var vGrad=c.createLinearGradient(24,vwy,W-24,vwy);
+  vGrad.addColorStop(0,verd.g[0]); vGrad.addColorStop(1,verd.g[1]);
+  c.fillStyle=vGrad; rr(c,24,vwy,W-48,72,14); c.fill();
+  c.strokeStyle=verd.c+'50'; c.lineWidth=1.5; rr(c,24,vwy,W-48,72,14); c.stroke();
+
+  // Trophée
+  c.font='26px sans-serif'; c.textAlign='left'; c.fillText('🏆',38,vwy+46);
+
+  // Texte vainqueur
+  c.font='600 10px Barlow,sans-serif'; c.fillStyle='rgba(255,255,255,.6)'; c.textAlign='left'; c.fillText(verd.lbl,80,vwy+24);
+  c.font='900 22px Barlow Condensed,sans-serif'; c.fillStyle=verd.c; c.fillText(verd.t,80,vwy+54);
+
+  // Badge % victoire
+  c.fillStyle='rgba(0,0,0,.3)'; rr(c,W-130,vwy+12,110,48,10); c.fill();
+  c.strokeStyle=verd.c+'40'; c.lineWidth=1; rr(c,W-130,vwy+12,110,48,10); c.stroke();
+  c.font='800 26px Barlow Condensed,sans-serif'; c.fillStyle=verd.c; c.textAlign='center'; c.fillText(verd.pct.toFixed(1)+'%',W-75,vwy+38);
+  c.font='600 9px Barlow,sans-serif'; c.fillStyle='rgba(255,255,255,.4)'; c.fillText('DE CHANCE DE GAGNER',W-75,vwy+54);
+
+  // ─────────────────────────────────────────────────────────────
+  // FOOTER : meilleur pari + logo + étoiles
+  // ─────────────────────────────────────────────────────────────
+  var fty=vwy+86;
+  c.fillStyle='rgba(255,255,255,.04)'; rr(c,24,fty,W-48,72,14); c.fill();
+  c.strokeStyle='rgba(100,120,255,.2)'; c.lineWidth=1; rr(c,24,fty,W-48,72,14); c.stroke();
+
+  // Meilleur pari (DC la plus haute)
+  var dcOpts=[{lbl:'1X',val:dc1x,sub:'Dom. ou Nul'},{lbl:'12',val:dc12,sub:'Dom. ou Ext.'},{lbl:'X2',val:dc2x,sub:'Nul ou Ext.'}];
+  dcOpts.sort(function(a,b){return b.val-a.val;});
+  var best=dcOpts[0];
+  // Étoile
+  c.font='20px sans-serif'; c.textAlign='left'; c.fillText('⭐',36,fty+40);
+  c.font='700 9px Barlow,sans-serif'; c.fillStyle='rgba(255,255,255,.4)'; c.textAlign='left'; c.fillText('MEILLEUR PARI RECOMMANDÉ',60,fty+22);
+  c.font='800 20px Barlow Condensed,sans-serif'; c.fillStyle='#f97316'; c.fillText(best.lbl+'  '+best.sub,60,fty+50);
+
+  // Confidence + étoiles
+  var stars=best.val>=80?5:best.val>=70?4:best.val>=60?3:best.val>=50?2:1;
+  c.font='700 10px Barlow,sans-serif'; c.fillStyle='rgba(255,255,255,.4)'; c.textAlign='right'; c.fillText('CONFIANCE',W-36,fty+22);
+  c.font='800 22px Barlow Condensed,sans-serif'; c.fillStyle='#f5c518'; c.fillText(best.val.toFixed(1)+'%',W-36,fty+46);
+  // Étoiles
+  for(var i=0;i<5;i++){
+    c.font='14px sans-serif'; c.textAlign='left';
+    c.fillText(i<stars?'★':'☆', W-120+i*18, fty+64);
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // DISCLAIMER
+  // ─────────────────────────────────────────────────────────────
+  c.font='500 9px Barlow,sans-serif'; c.fillStyle='rgba(255,255,255,.18)'; c.textAlign='center';
+  c.fillText('ⓘ  Les pourcentages représentent la confiance du modèle basé sur les statistiques et les tendances.', W/2, fty+90);
+
+  // ─────────────────────────────────────────────────────────────
+  // LOGO KICKLYTICS centré dans footer
+  // ─────────────────────────────────────────────────────────────
+  var logoImg=new Image();
+  logoImg.onload=function(){
+    var lH=44, lW=lH*(logoImg.width/logoImg.height);
+    c.drawImage(logoImg, W/2-lW/2, fty+20, lW, lH);
+    var imgData=cv.toDataURL('image/png');
+    showPredExportModal(imgData,d.hName,d.aName);
+  };
+  logoImg.onerror=function(){
+    var imgData=cv.toDataURL('image/png');
+    showPredExportModal(imgData,d.hName,d.aName);
+  };
+  logoImg.src='data:image/png;base64,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';
+}
+
+// Helper : dessine une rangée de 3 cartes avec arc et badge confiance
+function drawSection(c, cards, x, y, totalW, totalH, gap){
+  var cW=(totalW-gap*2)/3;
+  cards.forEach(function(card,i){
+    var cx=x+i*(cW+gap), cy=y;
+
+    // Card bg
+    var bg=c.createLinearGradient(cx,cy,cx,cy+totalH);
+    bg.addColorStop(0,card.g[0]+'cc'); bg.addColorStop(1,card.g[0]+'88');
+    c.fillStyle=bg; rr(c,cx,cy,cW,totalH,14); c.fill();
+    c.strokeStyle=card.border+'55'; c.lineWidth=1.5; rr(c,cx,cy,cW,totalH,14); c.stroke();
+
+    // Top border accent
+    var acc=c.createLinearGradient(cx,cy,cx+cW,cy);
+    acc.addColorStop(0,card.g[1]); acc.addColorStop(1,card.border);
+    c.fillStyle=acc; c.beginPath(); c.roundRect(cx,cy,cW,4,[4,4,0,0]); c.fill();
+
+    // Label
+    c.font='700 16px Barlow Condensed,sans-serif'; c.fillStyle=card.c; c.textAlign='center';
+    c.fillText(card.lbl, cx+cW/2, cy+28);
+
+    // Sublabel
+    c.font='500 9px Barlow,sans-serif'; c.fillStyle='rgba(255,255,255,.45)';
+    c.fillText(card.sub, cx+cW/2, cy+44);
+
+    // Big percentage
+    c.font='900 '+(card.val>=100?'34':'38')+'px Barlow Condensed,sans-serif';
+    var pGrad=c.createLinearGradient(cx,cy+50,cx,cy+105);
+    pGrad.addColorStop(0,'#ffffff'); pGrad.addColorStop(1,card.c);
+    c.fillStyle=pGrad; c.fillText(card.val.toFixed(1)+'%', cx+cW/2, cy+100);
+
+    // Arc demi-cercle
+    var aX=cx+cW/2, aY=cy+138, aR=26;
+    c.strokeStyle='rgba(255,255,255,.08)'; c.lineWidth=5; c.lineCap='round';
+    c.beginPath(); c.arc(aX,aY,aR,Math.PI,0); c.stroke();
+    var arG=c.createLinearGradient(aX-aR,aY,aX+aR,aY);
+    arG.addColorStop(0,card.g[1]); arG.addColorStop(1,card.c);
+    c.strokeStyle=arG; c.lineWidth=5;
+    c.beginPath(); c.arc(aX,aY,aR,Math.PI,Math.PI+Math.PI*Math.min(card.val,100)/100); c.stroke();
+
+    // Badge confiance
+    var lvl=card.val>=80?'TRÈS ÉLEVÉE':card.val>=65?'ÉLEVÉE':card.val>=50?'MODÉRÉE':'FAIBLE';
+    var badgeW=cW-24, badgeH=22;
+    var bx=cx+12, by=cy+totalH-32;
+    c.fillStyle=card.c+'28'; rr(c,bx,by,badgeW,badgeH,6); c.fill();
+    c.strokeStyle=card.c+'50'; c.lineWidth=1; rr(c,bx,by,badgeW,badgeH,6); c.stroke();
+    c.font='700 9px Barlow Condensed,sans-serif'; c.fillStyle=card.c; c.textAlign='center';
+    c.fillText('CONFIANCE '+lvl, cx+cW/2, by+15);
+  });
+}
+
+function rr(ctx,x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+
+// ─── Historique localStorage ──────────────────────────────────────────────────
+var HIST=JSON.parse(localStorage.getItem('fpHist')||'[]');
+function saveHist(){HIST=HIST.slice(0,50);localStorage.setItem('fpHist',JSON.stringify(HIST));}
+
+function saveEntry(){
+  if(!_data) return;
+  var d=_data;
+  var aiEl=document.getElementById('aiResult');
+  var aiText=aiEl.style.display!=='none'?aiEl.textContent:'';
+  var fp=d.finalProbs;
+  var verdict=fp.win>fp.draw&&fp.win>fp.lose?'1':fp.lose>fp.draw&&fp.lose>fp.win?'2':'N';
+  var vc=verdict==='1'?'#00e676':verdict==='2'?'#ff5252':'#f5c518';
+  HIST.unshift({id:Date.now(),
+    date:new Date().toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}),
+    home:d.hName,away:d.aName,lH:d.lH.toFixed(2),lA:d.lA.toFixed(2),
+    win:fp.win.toFixed(1),draw:fp.draw.toFixed(1),lose:fp.lose.toFixed(1),
+    btts:d.r.btts.toFixed(1),o15:d.r.o15.toFixed(1),o25:d.r.o25.toFixed(1),
+    score:d.r.sc[0].h+'–'+d.r.sc[0].a,verdict,vc,aiText,
+    hasBook:d.hasBook,o1:d.o1,oN:d.oN,o2:d.o2,result:null});
+  saveHist();renderHistory();
+  var btn=document.getElementById('saveBtn');
+  var orig=btn.textContent;
+  btn.textContent='✅ Sauvé!'; btn.style.color='var(--green)';
+  setTimeout(function(){btn.textContent=orig;btn.style.color='';},1400);
+}
+
+function setResult(id,res,btn){
+  var e=HIST.find(function(x){return x.id===id;});if(!e)return;
+  e.result=res;saveHist();
+  btn.closest('.res-group').querySelectorAll('.res-btn').forEach(function(b){b.className='res-btn';});
+  btn.className='res-btn '+(res==='✅'?'ok':res==='❌'?'ko':'half');
+}
+function deleteEntry(id){
+  HIST=HIST.filter(function(e){return e.id!==id;});saveHist();
+  var el=document.getElementById('he_'+id);if(el)el.remove();
+  if(!document.getElementById('historyList').children.length)document.getElementById('historySection').style.display='none';
+  tx('historyCount','('+HIST.length+')');
+}
+function clearAll(){
+  if(!confirm('Effacer tout l\'historique ?'))return;
+  HIST=[];saveHist();
+  document.getElementById('historySection').style.display='none';
+  document.getElementById('historyList').innerHTML='';
+}
+function toggleAI(id){
+  var el=document.getElementById('ait_'+id);if(el)el.style.display=el.style.display==='none'?'block':'none';
+}
+function renderHistory(){
+  var sec=document.getElementById('historySection');
+  var list=document.getElementById('historyList');
+  if(!HIST.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  tx('historyCount','('+HIST.length+')');
+  list.innerHTML=HIST.map(function(e){
+    var hS=e.home.split(' ').pop(),aS=e.away.split(' ').pop();
+    var vLabel=e.verdict==='1'?hS:e.verdict==='2'?aS:'NUL';
+    var badges=[['1',e.win+'%','#00e676'],['X',e.draw+'%','#f5c518'],['2',e.lose+'%','#ff5252'],['BTTS',e.btts+'%','#7c4dff'],['O1.5',e.o15+'%','#00e5ff'],['O2.5',e.o25+'%','#5c9dff']];
+    var bookInfo=e.hasBook?'<span style="font-size:9px;color:var(--orange);font-family:var(--mono)">📒 '+e.o1+'/'+e.oN+'/'+e.o2+'</span>':'';
+    return '<div class="hist-entry" id="he_'+e.id+'">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">'
+      +'<div><span style="font-size:12px;font-weight:700;color:var(--text);font-family:\'Barlow Condensed\',sans-serif;letter-spacing:1px">'+e.home+' <span style="color:var(--text3)">vs</span> '+e.away+'</span>'
+      +'<div style="font-size:9px;color:var(--text3);margin-top:1px">'+e.date+'</div></div>'
+      +'<button onclick="deleteEntry('+e.id+')" style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer">✕</button></div>'
+      +'<div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap">'
+      +'<span style="background:'+e.vc+'22;border:1px solid '+e.vc+'55;color:'+e.vc+';border-radius:5px;padding:2px 8px;font-size:10px;font-weight:800;font-family:\'Barlow Condensed\',sans-serif">'+vLabel+'</span>'
+      +'<span style="font-size:10px;color:var(--text2);font-family:var(--mono)">Score: <strong style="color:var(--text)">'+e.score+'</strong></span>'
+      +'<span style="font-size:10px;color:var(--text2);font-family:var(--mono)">λ '+e.lH+'/'+e.lA+'</span>'+bookInfo+'</div>'
+      +'<div class="hist-badges">'+badges.map(function(b){return '<div class="hist-badge" style="background:'+b[2]+'11;border:1px solid '+b[2]+'33"><div class="hb-lbl" style="color:'+b[2]+'">'+b[0]+'</div><div class="hb-val">'+b[1]+'</div></div>';}).join('')+'</div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:center">'
+      +'<div class="res-group" style="display:flex;gap:4px;align-items:center"><span style="font-size:9px;color:var(--text3)">Résultat :</span>'
+      +'<button class="res-btn '+(e.result==='✅'?'ok':'')+'" onclick="setResult('+e.id+',\'✅\',this)">✅</button>'
+      +'<button class="res-btn '+(e.result==='❌'?'ko':'')+'" onclick="setResult('+e.id+',\'❌\',this)">❌</button>'
+      +'<button class="res-btn '+(e.result==='⚠️'?'half':'')+'" onclick="setResult('+e.id+',\'⚠️\',this)">⚠️</button></div>'
+      +(e.aiText?'<button onclick="toggleAI('+e.id+')" style="background:none;border:1px solid var(--border2);border-radius:5px;color:var(--text2);font-size:9px;padding:2px 7px;cursor:pointer;font-family:\'Barlow\',sans-serif">🤖 Analyse</button>':'')+'</div>'
+      +(e.aiText?'<div id="ait_'+e.id+'" style="display:none;margin-top:8px;background:rgba(255,255,255,.02);border-radius:8px;padding:10px;font-size:11px;line-height:1.7;color:var(--text2);border:1px solid var(--border)">'+e.aiText.replace(/</g,'&lt;')+'</div>':'')
+      +'</div>';
+  }).join('');
+}
+
+
+// ─── H2H W/N libre ───────────────────────────────────────────────────────────
+function updateH2H() {
+  // Domicile
+  var hW = Math.max(0, parseInt(document.getElementById('hH2HWins').value) || 0);
+  var hN = Math.max(1, parseInt(document.getElementById('hH2HTotal').value) || 1);
+  hW = Math.min(hW, hN); // victoires <= total
+  document.getElementById('hH2HWins').value = hW;
+  var hRatio = hW / hN;
+  document.getElementById('hH2H').value = hRatio;
+  document.getElementById('hH2HVal').textContent = hW + '/' + hN;
+
+  // Extérieur
+  var aW = Math.max(0, parseInt(document.getElementById('aH2HWins').value) || 0);
+  var aN = Math.max(1, parseInt(document.getElementById('aH2HTotal').value) || 1);
+  aW = Math.min(aW, aN);
+  document.getElementById('aH2HWins').value = aW;
+  var aRatio = aW / aN;
+  document.getElementById('aH2H').value = aRatio;
+  document.getElementById('aH2HVal').textContent = aW + '/' + aN;
+
+  update();
+}
+
+// ─── Bindings ─────────────────────────────────────────────────────────────────
+['hXgAtt','hXgDef','aXgAtt','aXgDef','hAttAbs','hDefAbs','aAttAbs','aDefAbs',
+ 'hSot','hShots','hGoals','hPoss','aSot','aShots','aGoals','aPoss',
+ 'homeAdv',
+ 'cfgLeagueAvg'].forEach(function(id){
+  document.getElementById(id).oninput=update;
+});
+['homeNameInput','awayNameInput','oddHome','oddDraw','oddAway'].forEach(function(id){
+  document.getElementById(id).oninput=update;
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+renderForm('hFormRow','hForm');
+renderForm('hFormHomeRow','hFormHome');
+renderForm('aFormRow','aForm');
+renderForm('aFormAwayRow','aFormAway');
+renderHistory();
+update();
+
+
+// ══ SCORER PRO JS ═══════════════════════════════════════════════════════════
+
+// ─── Constantes ───────────────────────────────────────────────────────────────
+const ROLES = ['ATT','MIL','DC','PEN'];
+const ROLE_COLORS = {
+  ATT:{bg:'rgba(255,77,141,.15)',border:'rgba(255,77,141,.4)',text:'var(--pink)'},
+  MIL:{bg:'rgba(41,121,255,.15)',border:'rgba(41,121,255,.4)',text:'var(--blue2)'},
+  DC: {bg:'rgba(0,191,165,.12)', border:'rgba(0,191,165,.4)', text:'var(--teal)'},
+  PEN:{bg:'rgba(245,197,24,.15)',border:'rgba(245,197,24,.4)',text:'var(--gold)'},
+};
+const ROLE_SHARE = {ATT:1.0,MIL:0.45,DC:0.10,PEN:0.20};
+
+const sc_PRESETS = [
+  {home:'RC Lens',away:'LOSC Lille',homeLambda:1.55,awayLambda:1.25,
+   homePlayers:[{name:'Wahi',xg:0.55,sot:3.2,form:0.8,role:'ATT',cote:''},{name:'Saïd',xg:0.35,sot:2.0,form:0.7,role:'ATT',cote:''},{name:'Thomasson',xg:0.25,sot:1.5,form:0.6,role:'MIL',cote:''},{name:'Frankowski',xg:0.18,sot:1.2,form:0.6,role:'MIL',cote:''}],
+   awayPlayers:[{name:'David',xg:0.62,sot:3.8,form:0.9,role:'ATT',cote:''},{name:'Zhegrova',xg:0.30,sot:2.2,form:0.7,role:'ATT',cote:''},{name:'Haraldsson',xg:0.22,sot:1.4,form:0.6,role:'MIL',cote:''},{name:'Bakker',xg:0.12,sot:0.9,form:0.5,role:'MIL',cote:''}]},
+  {home:'PSG',away:'OM',homeLambda:2.10,awayLambda:1.35,
+   homePlayers:[{name:'Mbappé',xg:0.82,sot:5.1,form:0.95,role:'ATT',cote:''},{name:'Dembélé',xg:0.45,sot:3.2,form:0.80,role:'ATT',cote:''},{name:'Barcola',xg:0.38,sot:2.5,form:0.75,role:'ATT',cote:''},{name:'Vitinha',xg:0.20,sot:1.5,form:0.65,role:'MIL',cote:''}],
+   awayPlayers:[{name:'Aubameyang',xg:0.55,sot:3.5,form:0.75,role:'ATT',cote:''},{name:'Harit',xg:0.28,sot:1.8,form:0.68,role:'MIL',cote:''},{name:'Ndiaye',xg:0.22,sot:1.5,form:0.65,role:'ATT',cote:''},{name:'Ounahi',xg:0.15,sot:1.0,form:0.55,role:'MIL',cote:''}]},
+  {home:'Lyon',away:'Monaco',homeLambda:1.45,awayLambda:1.65,
+   homePlayers:[{name:'Lacazette',xg:0.50,sot:3.0,form:0.80,role:'ATT',cote:''},{name:'Cherki',xg:0.32,sot:2.2,form:0.75,role:'ATT',cote:''},{name:'Tolisso',xg:0.18,sot:1.3,form:0.62,role:'MIL',cote:''},{name:'Mikautadze',xg:0.30,sot:1.8,form:0.70,role:'ATT',cote:''}],
+   awayPlayers:[{name:'Ben Yedder',xg:0.58,sot:3.6,form:0.82,role:'ATT',cote:''},{name:'Akliouche',xg:0.30,sot:1.9,form:0.70,role:'ATT',cote:''},{name:'Magassa',xg:0.10,sot:0.8,form:0.55,role:'DC',cote:''},{name:'Golovin',xg:0.25,sot:1.7,form:0.68,role:'MIL',cote:''}]}
+];
+
+let sc_results = null;
+let sc_imgDataUrl = null;
+
+// ─── Maths ────────────────────────────────────────────────────────────────────
+function sc_gv(id){return parseFloat(document.getElementById(id).value)||0;}
+function sc_tx(id,t){var e=document.getElementById(id);if(e)e.textContent=t;}
+
+function playerLambda(player,teamLambda,allPlayers){
+  var totalXg=allPlayers.reduce(function(s,p){return s+p.xg*ROLE_SHARE[p.role];},0);
+  if(totalXg<=0)totalXg=1;
+  var share=(player.xg*ROLE_SHARE[player.role])/totalXg;
+  var sotBonus=Math.max(0.85,Math.min(1.15,player.sot/3.0));
+  return Math.max(0.01,share*teamLambda*player.form*sotBonus);
+}
+function p1Plus(lam){return 1-Math.exp(-lam);}
+function p2Plus(lam){return 1-Math.exp(-lam)-lam*Math.exp(-lam);}
+
+// Probabilités Poisson équipe
+function poissonProb(lambda,k){
+  var p=Math.exp(-lambda);
+  for(var i=0;i<k;i++)p*=lambda/(i+1);
+  return p;
+}
+function probBTTS(hL,aL){
+  var ph0=Math.exp(-hL),pa0=Math.exp(-aL);
+  return (1-ph0)*(1-pa0);
+}
+function probO(lambda1,lambda2,threshold){
+  var p=0;
+  for(var h=0;h<=10;h++)for(var a=0;a<=10;a++){if(h+a>threshold)p+=poissonProb(lambda1,h)*poissonProb(lambda2,a);}
+  return p;
+}
+function probWin(hL,aL){
+  var ph=0,pa=0,pd=0;
+  for(var h=0;h<=10;h++)for(var a=0;a<=10;a++){var p=poissonProb(hL,h)*poissonProb(aL,a);if(h>a)ph+=p;else if(a>h)pa+=p;else pd+=p;}
+  return{home:ph,draw:pd,away:pa};
+}
+function mostLikelyScore(hL,aL){
+  var best=-1,bh=1,ba=0;
+  for(var h=0;h<=6;h++)for(var a=0;a<=6;a++){var p=poissonProb(hL,h)*poissonProb(aL,a);if(p>best){best=p;bh=h;ba=a;}}
+  return{h:bh,a:ba,p:best};
+}
+function confLabel(p){
+  if(p>=0.85)return{label:'CONFIANCE TRÈS ÉLEVÉE',stars:5};
+  if(p>=0.70)return{label:'CONFIANCE ÉLEVÉE',stars:4};
+  if(p>=0.55)return{label:'CONFIANCE MODÉRÉE',stars:3};
+  if(p>=0.40)return{label:'CONFIANCE FAIBLE',stars:2};
+  return{label:'CONFIANCE TRÈS FAIBLE',stars:1};
+}
+
+function collectPlayers(side){
+  var list=document.getElementById(side+'PlayerList');
+  var rows=list.querySelectorAll('.player-row');
+  var players=[];
+  rows.forEach(function(row){
+    var name=row.querySelector('.player-name-inp').value||'Joueur';
+    var xg=parseFloat(row.querySelector('[data-stat="xg"]').value)||0.2;
+    var sot=parseFloat(row.querySelector('[data-stat="sot"]').value)||2.0;
+    var form=parseFloat(row.querySelector('[data-stat="form"]').value)||0.7;
+    var roleActive=row.querySelector('.role-btn.active');
+    var role=roleActive?roleActive.dataset.role:'ATT';
+    var coteInp=row.querySelector('.player-cote-inp');
+    var cote=coteInp?coteInp.value:'';
+    players.push({name,xg,sot,form,role,cote});
+  });
+  return players;
+}
+
+function computeResults(){
+  var hL=sc_gv('homeLambda'),aL=sc_gv('awayLambda');
+  var hP=collectPlayers('home'),aP=collectPlayers('away');
+  var process=function(players,tL){
+    return players.map(function(p){
+      var lam=playerLambda(p,tL,players);
+      return{...p,lam,p1:p1Plus(lam),p2:p2Plus(lam)};
+    }).sort(function(a,b){return b.p1-a.p1;});
+  };
+  return{
+    home:process(hP,hL),away:process(aP,aL),
+    homeLam:hL,awayLam:aL,
+    btts:probBTTS(hL,aL),
+    o15:probO(hL,aL,1.5),o25:probO(hL,aL,2.5),
+    win:probWin(hL,aL),
+    score:mostLikelyScore(hL,aL)
+  };
+}
+
+// ─── DOM joueurs ──────────────────────────────────────────────────────────────
+function renderPlayerRow(side,data,idx){
+  var isHome=side==='home';
+  var accentColor=isHome?'var(--pink)':'var(--teal)';
+  var numBg=isHome?'rgba(255,77,141,.15)':'rgba(0,191,165,.12)';
+  var row=document.createElement('div');
+  row.className='player-row';
+  row.dataset.idx=idx;
+  var rolesHtml=ROLES.map(function(r){
+    var rc=ROLE_COLORS[r];
+    var isActive=data.role===r;
+    return '<button class="role-btn'+(isActive?' active':'')+'" data-role="'+r+'" '
+      +'style="'+(isActive?'background:'+rc.bg+';border-color:'+rc.border+';color:'+rc.text+';':'')+'">'+r+'</button>';
+  }).join('');
+  row.innerHTML=`
+    <button class="remove-btn" onclick="removePlayer('${side}',${idx})">✕</button>
+    <div class="player-top">
+      <div class="player-num" style="background:${numBg};color:${accentColor}">${idx+1}</div>
+      <input class="player-name-inp" type="text" placeholder="Nom du joueur" value="${data.name||''}">
+    </div>
+    <div class="player-stats">
+      <div class="pstat"><div class="pstat-lbl">xG/MATCH</div>
+        <input type="range" class="ps" data-stat="xg" min="0.02" max="1.5" step="0.01" value="${data.xg||0.3}">
+        <div class="pstat-val" data-val="xg">${(data.xg||0.3).toFixed(2)}</div></div>
+      <div class="pstat"><div class="pstat-lbl">TIRS CADRÉS</div>
+        <input type="range" class="ps" data-stat="sot" min="0.1" max="6.0" step="0.1" value="${data.sot||2.0}">
+        <div class="pstat-val" data-val="sot">${(data.sot||2.0).toFixed(1)}</div></div>
+      <div class="pstat">
+        <div class="pstat-lbl" style="display:flex;align-items:center;">FORME<span class="form-help-btn" onclick="showFormHelp(event)">?</span></div>
+        <input type="range" class="ps" data-stat="form" min="0.3" max="1.0" step="0.05" value="${data.form||0.7}">
+        <div class="pstat-val" data-val="form">${(data.form||0.7).toFixed(2)}</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+      <div class="player-role">${rolesHtml}</div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:6px;">
+        <span style="font-size:9px;color:var(--text3)">Cote</span>
+        <input class="player-cote-inp" type="number" min="1.01" max="50" step="0.01" placeholder="2.40" value="${data.cote||''}">
+      </div>
+    </div>`;
+  row.querySelectorAll('.ps').forEach(function(sl){
+    sl.oninput=function(){
+      var stat=sl.dataset.stat;
+      var valEl=row.querySelector('[data-val="'+stat+'"]');
+      if(valEl)valEl.textContent=stat==='sot'?parseFloat(sl.value).toFixed(1):parseFloat(sl.value).toFixed(2);
+      sc_update();
+    };
+  });
+  row.querySelectorAll('.role-btn').forEach(function(btn){
+    btn.onclick=function(){
+      row.querySelectorAll('.role-btn').forEach(function(b){b.classList.remove('active');b.style.background='';b.style.borderColor='';b.style.color='';});
+      btn.classList.add('active');
+      var rc=ROLE_COLORS[btn.dataset.role];
+      btn.style.background=rc.bg;btn.style.borderColor=rc.border;btn.style.color=rc.text;
+      sc_update();
+    };
+  });
+  row.querySelector('.player-name-inp').oninput=sc_update;
+  row.querySelector('.player-cote-inp').oninput=sc_update;
+  return row;
+}
+
+function addPlayer(side,data){
+  var list=document.getElementById(side+'PlayerList');
+  var idx=list.children.length;
+  list.appendChild(renderPlayerRow(side,data||{name:'',xg:0.25,sot:2.0,form:0.7,role:'ATT',cote:''},idx));
+  sc_update();
+}
+function removePlayer(side,idx){
+  var list=document.getElementById(side+'PlayerList');
+  var rows=list.querySelectorAll('.player-row');
+  if(rows[idx])rows[idx].remove();
+  list.querySelectorAll('.player-row').forEach(function(r,i){r.dataset.idx=i;var n=r.querySelector('.player-num');if(n)n.textContent=i+1;});
+  sc_update();
+}
+
+function sc_update(){
+  var hName=document.getElementById('sc_homeNameInput').value||'Domicile';
+  var aName=document.getElementById('sc_awayNameInput').value||'Extérieur';
+  sc_tx('sc_homeTeamLbl',hName.toUpperCase());
+  sc_tx('sc_awayTeamLbl',aName.toUpperCase());
+  // λ total + compteurs joueurs
+  var lH=parseFloat(document.getElementById('homeLambda').value)||0;
+  var lA=parseFloat(document.getElementById('awayLambda').value)||0;
+  var lTotal=lH+lA;
+  if(document.getElementById('scLambdaTotal')) document.getElementById('scLambdaTotal').textContent=lTotal.toFixed(2);
+  if(document.getElementById('scLambdaDom')) document.getElementById('scLambdaDom').textContent=lH.toFixed(2);
+  if(document.getElementById('scLambdaExt')) document.getElementById('scLambdaExt').textContent=lA.toFixed(2);
+  if(document.getElementById('bannerLambdaDom')) document.getElementById('bannerLambdaDom').textContent=lH.toFixed(2);
+  if(document.getElementById('bannerLambdaExt')) document.getElementById('bannerLambdaExt').textContent=lA.toFixed(2);
+  if(document.getElementById('bannerLambdaTotal')) document.getElementById('bannerLambdaTotal').textContent=lTotal.toFixed(2);
+  var hCount=document.querySelectorAll('#homePlayerList .player-row').length;
+  var aCount=document.querySelectorAll('#awayPlayerList .player-row').length;
+  if(document.getElementById('homePlayerCount')) document.getElementById('homePlayerCount').textContent=hCount+' joueur'+(hCount>1?'s':'');
+  if(document.getElementById('awayPlayerCount')) document.getElementById('awayPlayerCount').textContent=aCount+' joueur'+(aCount>1?'s':'');
+  sc_tx('homeLambdaVal',sc_gv('homeLambda').toFixed(2));
+  sc_tx('awayLambdaVal',sc_gv('awayLambda').toFixed(2));
+  sc_results=computeResults();
+}
+
+// ─── GÉNÉRATION CARTE IMAGE ───────────────────────────────────────────────────
+function svgGauge(pct,color,size){
+  size=size||54;
+  var r=20,cx=27,cy=27;
+  var circumference=Math.PI*r; // demi-cercle
+  var offset=circumference*(1-pct);
+  return `<svg width="${size}" height="${size/2+4}" viewBox="0 0 54 30" style="overflow:visible">
+    <path d="M7,27 A20,20 0 0,1 47,27" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M7,27 A20,20 0 0,1 47,27" fill="none" stroke="${color}" stroke-width="3.5" stroke-linecap="round"
+      stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" style="transition:stroke-dashoffset .8s"/>
+  </svg>`;
+}
+
+function statCard(label,sub,pct,colorSet){
+  var conf=confLabel(pct);
+  var stars='★'.repeat(conf.stars)+'☆'.repeat(5-conf.stars);
+  return `<div class="rc-stat-card" style="background:${colorSet.bg};border:1px solid ${colorSet.border}">
+    <div class="rc-stat-label" style="color:${colorSet.accent}">${label}</div>
+    <div class="rc-stat-sub">${sub}</div>
+    <div class="rc-stat-pct" style="color:#fff">${(pct*100).toFixed(1)}%</div>
+    <div class="rc-gauge">${svgGauge(pct,colorSet.accent,54)}</div>
+    <div class="rc-conf-badge" style="background:${colorSet.badgeBg};color:${colorSet.accent};font-size:7px;font-weight:900;letter-spacing:.8px">${conf.label}</div>
+  </div>`;
+}
+
+function scorerCard(player, side, rank){
+  var isHome = side==='home';
+  var medals = ['🥇','🥈','🥉',''];
+  var medal = medals[Math.min(rank, 3)];
+
+  // Couleurs selon équipe
+  var colorSets = {
+    home: [
+      {bg:'linear-gradient(135deg,#4a0030,#9d174d)', border:'rgba(244,63,94,.35)',  accent:'#fb7185', badgeBg:'rgba(244,63,94,.2)'},
+      {bg:'linear-gradient(135deg,#3b0764,#6d28d9)', border:'rgba(167,139,250,.3)', accent:'#c4b5fd', badgeBg:'rgba(167,139,250,.2)'},
+      {bg:'linear-gradient(135deg,#1e1b4b,#3730a3)', border:'rgba(129,140,248,.3)', accent:'#a5b4fc', badgeBg:'rgba(129,140,248,.2)'},
+      {bg:'linear-gradient(135deg,#1e3a5f,#1d4ed8)', border:'rgba(96,165,250,.25)', accent:'#93c5fd', badgeBg:'rgba(96,165,250,.15)'},
+    ],
+    away: [
+      {bg:'linear-gradient(135deg,#042f2e,#0f766e)', border:'rgba(45,212,191,.35)',  accent:'#2dd4bf', badgeBg:'rgba(45,212,191,.2)'},
+      {bg:'linear-gradient(135deg,#052e16,#15803d)', border:'rgba(74,222,128,.3)',   accent:'#86efac', badgeBg:'rgba(74,222,128,.2)'},
+      {bg:'linear-gradient(135deg,#1c1917,#57534e)', border:'rgba(168,162,158,.25)', accent:'#d6d3d1', badgeBg:'rgba(168,162,158,.15)'},
+      {bg:'linear-gradient(135deg,#1e3a5f,#164e63)', border:'rgba(103,232,249,.25)', accent:'#a5f3fc', badgeBg:'rgba(103,232,249,.15)'},
+    ]
+  };
+  var cs = (colorSets[side]||colorSets.home)[Math.min(rank,3)];
+  var conf = confLabel(player.p1);
+
+  return `<div class="rc-stat-card" style="background:${cs.bg};border:1px solid ${cs.border};position:relative;">
+    ${medal ? `<div style="position:absolute;top:7px;left:8px;font-size:13px;line-height:1">${medal}</div>` : ''}
+    <div class="rc-stat-label" style="color:${cs.accent};margin-top:${medal?'14px':'0'};font-size:11px">${player.name}</div>
+    <div class="rc-stat-sub" style="font-size:8px">${player.role} · 2 buts: ${(player.p2*100).toFixed(1)}%</div>
+    <div class="rc-stat-pct" style="color:#fff;font-size:30px">${(player.p1*100).toFixed(1)}%</div>
+    <div class="rc-gauge">${svgGauge(player.p1, cs.accent, 54)}</div>
+    <div class="rc-conf-badge" style="background:${cs.badgeBg};color:${cs.accent};font-size:7px;font-weight:900;letter-spacing:.8px">${conf.label}</div>
+  </div>`;
+}
+
+function scorerRows(players,side,maxRows){
+  maxRows=maxRows||4;
+  var col=side==='home'?'#ff4d8d':'#00bfa5';
+  var maxP=players[0]?players[0].p1:1;
+  return players.slice(0,maxRows).map(function(p,i){
+    var medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+    var bw=maxP>0?(p.p1/maxP*100).toFixed(0):0;
+    var rankBg=i===0?'rgba(245,197,24,.15)':'rgba(255,255,255,.04)';
+    return `<div class="rc-scorer-row">
+      <div class="rc-scorer-rank" style="background:${rankBg}">${medal||'<span style="font-size:8px;color:rgba(255,255,255,.3)">${i+1}</span>'}</div>
+      <div class="rc-scorer-name">${p.name}</div>
+      <div class="rc-scorer-pct" style="color:${col}">${(p.p1*100).toFixed(1)}%</div>
+      <div class="rc-scorer-bar-wrap"><div class="rc-scorer-bar" style="width:${bw}%;background:${col}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function buildCard(r,homeName,awayName){
+  var win=r.win;
+  var winnerName=win.home>=win.away?homeName:awayName;
+  var winnerPct=Math.max(win.home,win.away);
+  var score=r.score;
+  var bestPct=Math.max(r.btts,r.o15,r.o25,win.home+win.draw,win.home);
+  var bestLabel='';
+  if(bestPct===r.o15)bestLabel='O 1.5 — Plus de 1.5 buts';
+  else if(bestPct===r.o25)bestLabel='O 2.5 — Plus de 2.5 buts';
+  else if(bestPct===r.btts)bestLabel='BTTS — Les 2 équipes marquent';
+  else if(bestPct===win.home+win.draw)bestLabel='1X — '+homeName+' ou Nul';
+  else bestLabel='Victoire '+winnerName;
+
+  var dc1x=win.home+win.draw;
+  var dc12=win.home+win.away;
+  var dcx2=win.draw+win.away;
+
+  return `
+  <div class="rc-hdr">
+    <div class="rc-team-home">${homeName}</div>
+    <div class="rc-vs">VS</div>
+    <div class="rc-team-away">${awayName}</div>
+  </div>
+
+  <div class="rc-section-title">
+    <div><span class="rc-section-icon">🛡</span><span class="rc-section-lbl">CONFIANCE DES PARIS</span></div>
+    <div class="rc-section-sub">Probabilité que le pari soit gagnant</div>
+  </div>
+
+  <div class="rc-grid-3">
+    ${statCard('BTTS','Les 2 équipes marquent',r.btts,{bg:'linear-gradient(135deg,#2d1060,#5b21b6)',border:'rgba(139,92,246,.3)',accent:'#c084fc',badgeBg:'rgba(139,92,246,.2)'})}
+    ${statCard('O 1.5','Plus de 1.5 buts',r.o15,{bg:'linear-gradient(135deg,#0e4a4a,#0f766e)',border:'rgba(20,184,166,.3)',accent:'#2dd4bf',badgeBg:'rgba(20,184,166,.2)'})}
+    ${statCard('O 2.5','Plus de 2.5 buts',r.o25,{bg:'linear-gradient(135deg,#1e3a6e,#1d4ed8)',border:'rgba(59,130,246,.3)',accent:'#60a5fa',badgeBg:'rgba(59,130,246,.2)'})}
+  </div>
+
+  <div class="rc-section-title">
+    <div><span class="rc-section-icon">🛡</span><span class="rc-section-lbl">DOUBLES CHANCES</span></div>
+  </div>
+
+  <div class="rc-grid-3">
+    ${statCard('1X','Dom. ou Nul',dc1x,{bg:'linear-gradient(135deg,#0e4a4a,#0f766e)',border:'rgba(20,184,166,.3)',accent:'#2dd4bf',badgeBg:'rgba(20,184,166,.2)'})}
+    ${statCard('12','Dom. ou Ext.',dc12,{bg:'linear-gradient(135deg,#431407,#c2410c)',border:'rgba(249,115,22,.3)',accent:'#fb923c',badgeBg:'rgba(249,115,22,.2)'})}
+    ${statCard('X2','Nul ou Ext.',dcx2,{bg:'linear-gradient(135deg,#2d1060,#5b21b6)',border:'rgba(139,92,246,.3)',accent:'#c084fc',badgeBg:'rgba(139,92,246,.2)'})}
+  </div>
+
+  <div class="rc-section-title" style="margin-top:4px">
+    <div><span class="rc-section-icon">⚽</span><span class="rc-section-lbl">BUTEURS PROBABLES — ${homeName.toUpperCase()}</span></div>
+    <div class="rc-section-sub">Probabilité de marquer au moins 1 but</div>
+  </div>
+  <div class="rc-grid-3" style="margin-bottom:10px">
+    ${r.home.slice(0,3).map(function(p,i){return scorerCard(p,'home',i);}).join('')}
+  </div>
+  ${r.home.length>3?`<div class="rc-grid-3" style="margin-bottom:14px">${r.home.slice(3,6).map(function(p,i){return scorerCard(p,'home',i+3);}).join('')}</div>`:''}
+
+  <div class="rc-section-title" style="margin-top:2px">
+    <div><span class="rc-section-icon">⚽</span><span class="rc-section-lbl">BUTEURS PROBABLES — ${awayName.toUpperCase()}</span></div>
+    <div class="rc-section-sub">Probabilité de marquer au moins 1 but</div>
+  </div>
+  <div class="rc-grid-3" style="margin-bottom:10px">
+    ${r.away.slice(0,3).map(function(p,i){return scorerCard(p,'away',i);}).join('')}
+  </div>
+  ${r.away.length>3?`<div class="rc-grid-3" style="margin-bottom:14px">${r.away.slice(3,6).map(function(p,i){return scorerCard(p,'away',i+3);}).join('')}</div>`:''}
+
+  <div class="rc-score-box">
+    <div>
+      <div class="rc-score-lbl">SCORE LE PLUS PROBABLE</div>
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <div class="rc-score-val">${score.h} - ${score.a}</div>
+        <div class="rc-score-prob">(${(score.p*100).toFixed(1)}%)</div>
+      </div>
+    </div>
+    <div style="font-size:22px">🎯</div>
+  </div>
+
+  <div class="rc-winner-box" style="background:linear-gradient(135deg,rgba(0,230,118,.08),rgba(0,150,80,.12));border:1px solid rgba(0,230,118,.2)">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="font-size:22px">🏆</div>
+      <div>
+        <div class="rc-winner-lbl">VAINQUEUR PRÉDIT</div>
+        <div class="rc-winner-name" style="color:#00e676">${winnerName.toUpperCase()}</div>
+      </div>
+    </div>
+    <div class="rc-winner-pct-wrap">
+      <div class="rc-winner-pct">${(winnerPct*100).toFixed(1)}%</div>
+      <div class="rc-winner-sub">DE CHANCE DE GAGNER</div>
+    </div>
+  </div>
+
+  <div class="rc-best-box">
+    <div>
+      <div class="rc-best-lbl">MEILLEUR PARI RECOMMANDÉ</div>
+      <div class="rc-best-val">${bestLabel}</div>
+    </div>
+    <div class="rc-best-right">
+      <div class="rc-best-conf-lbl">CONFIANCE</div>
+      <div class="rc-best-conf-pct">${(bestPct*100).toFixed(1)}%</div>
+      <div class="rc-stars">${'★'.repeat(confLabel(bestPct).stars)}</div>
+    </div>
+  </div>
+
+  <div class="rc-footer">
+    <div class="rc-footer-disc">ⓘ Les pourcentages représentent la confiance du modèle basé sur les statistiques et les tendances.</div>
+    <div class="rc-footer-logo">KICKLYTICS</div>
+  </div>`;
+}
+
+// ─── GÉNÉRER et EXPORTER ──────────────────────────────────────────────────────
+function generateCard(){
+  sc_results=computeResults();
+  var homeName=document.getElementById('sc_homeNameInput').value||'Domicile';
+  var awayName=document.getElementById('sc_awayNameInput').value||'Extérieur';
+  var card=document.getElementById('resultCard');
+  card.style.display='block';
+  card.innerHTML=buildCard(sc_results,homeName,awayName);
+
+  // Scroll to card
+  card.scrollIntoView({behavior:'smooth',block:'center'});
+
+  // Génère l'image avec html2canvas
+  setTimeout(function(){
+    html2canvas(card,{
+      backgroundColor:'#0b0e1f',
+      scale:2,
+      useCORS:true,
+      allowTaint:true,
+      logging:false
+    }).then(function(canvas){
+      sc_imgDataUrl=canvas.toDataURL('image/png');
+      document.getElementById('previewImg').src=sc_imgDataUrl;
+      document.getElementById('modalOverlay').classList.add('open');
+    });
+  },150);
+}
+
+function downloadImg(){
+  if(!sc_imgDataUrl)return;
+  var homeName=document.getElementById('sc_homeNameInput').value||'match';
+  var awayName=document.getElementById('sc_awayNameInput').value||'';
+  var a=document.createElement('a');
+  a.href=sc_imgDataUrl;
+  a.download='kicklytics_'+homeName.replace(/\s/g,'_')+'_vs_'+awayName.replace(/\s/g,'_')+'.png';
+  a.click();
+}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
+
+// ─── AI ────────────────────────────────────────────────────────────────────────
+async function sc_runAI(){
+  sc_results=computeResults();
+  var r=sc_results;
+  var hName=document.getElementById('sc_homeNameInput').value;
+  var aName=document.getElementById('sc_awayNameInput').value;
+  var btn=document.getElementById('sc_aiBtn');
+  var loader=document.getElementById('sc_aiLoader');
+  var result=document.getElementById('sc_aiResult');
+  document.getElementById('sc_aiPlaceholder').style.display='none';
+  btn.disabled=true;btn.textContent='⏳...';
+  loader.style.display='block';result.style.display='none';
+  function fmt(p){return p.slice(0,4).map(function(x){return x.name+' ('+x.role+') '+(x.p1*100).toFixed(1)+'%';}).join(', ');}
+  var prompt='Analyste foot expert paris sportifs. Match : '+hName+' (λ='+r.homeLam.toFixed(2)+') vs '+aName+' (λ='+r.awayLam.toFixed(2)+'). Buteurs dom: '+fmt(r.home)+'. Buteurs ext: '+fmt(r.away)+'. BTTS:'+( r.btts*100).toFixed(0)+'% O1.5:'+(r.o15*100).toFixed(0)+'% O2.5:'+(r.o25*100).toFixed(0)+'%. 1 buteur chaud + pourquoi. 1 value bet si dispo. 1 combo. Max 120 mots. Sois direct.';
+  try{
+    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    var data=await res.json();
+    var text=data.content&&data.content.find(function(b){return b.type==='text';});
+    result.textContent=text?text.text:'Indisponible.';
+    result.style.display='block';
+  }catch(e){result.textContent='Erreur réseau.';result.style.display='block';}
+  loader.style.display='none';btn.disabled=false;btn.textContent='Analyser →';
+}
+
+// ─── Presets ──────────────────────────────────────────────────────────────────
+function loadPreset(idx){
+  var p=sc_PRESETS[idx];
+  document.getElementById('sc_homeNameInput').value=p.home;
+  document.getElementById('sc_awayNameInput').value=p.away;
+  document.getElementById('homeLambda').value=p.homeLambda;
+  document.getElementById('awayLambda').value=p.awayLambda;
+  sc_tx('homeLambdaVal', parseFloat(p.homeLambda).toFixed(2));
+  sc_tx('awayLambdaVal', parseFloat(p.awayLambda).toFixed(2));
+  document.getElementById('homePlayerList').innerHTML='';
+  document.getElementById('awayPlayerList').innerHTML='';
+  p.homePlayers.forEach(function(pl){addPlayer('home',pl);});
+  p.awayPlayers.forEach(function(pl){addPlayer('away',pl);});
+  document.getElementById('sc_aiResult').style.display='none';
+  document.getElementById('sc_aiPlaceholder').style.display='block';
+  document.getElementById('resultCard').style.display='none';
+  sc_update();
+}
+
+document.querySelectorAll('.sc-preset-btn').forEach(function(btn){
+  btn.onclick=function(){
+    document.querySelectorAll('.sc-preset-btn').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    loadPreset(+btn.dataset.preset);
+  };
+});
+['sc_homeNameInput','sc_awayNameInput','homeLambda','awayLambda'].forEach(function(id){
+  document.getElementById(id).oninput=sc_update;
+});
+
+// ─── Tooltip forme ────────────────────────────────────────────────────────────
+function showFormHelp(e){
+  e.stopPropagation();
+  var tt=document.getElementById('formTooltip');
+  var ov=document.getElementById('formOverlay');
+  var rect=e.currentTarget.getBoundingClientRect();
+  var left=rect.left+16,top=rect.bottom+8;
+  if(left+268>window.innerWidth)left=window.innerWidth-276;
+  if(top+320>window.innerHeight)top=rect.top-328;
+  tt.style.left=left+'px';tt.style.top=top+'px';
+  tt.classList.add('visible');ov.classList.add('visible');
+}
+function closeFormHelp(){
+  document.getElementById('formTooltip').classList.remove('visible');
+  document.getElementById('formOverlay').classList.remove('visible');
+}
+
+// ─── Init scorer (appelé depuis l'init global ci-dessous) ────────────────────
+// loadPreset(0); // <- appelé dans l'init global
+
+
+// ══ ONGLETS ══════════════════════════════════════════════════════════════════
+
+// ─── ONGLETS ──────────────────────────────────────────────────────────────────
+function switchTab(tabName) {
+  document.getElementById('tabPredictor').style.display = tabName === 'predictor' ? 'block' : 'none';
+  document.getElementById('tabScorer').style.display = tabName === 'scorer' ? 'block' : 'none';
+
+  var btnPred = document.getElementById('btnTabPredictor');
+  var btnScorer = document.getElementById('btnTabScorer');
+  btnPred.className = 'nav-tab' + (tabName === 'predictor' ? ' active-pred' : '');
+  btnScorer.className = 'nav-tab' + (tabName === 'scorer' ? ' active-scorer' : '');
+
+  // Sync λ quand on bascule sur le scorer
+  if (tabName === 'scorer' && _data) syncLambdaToScorer();
+}
+
+
+// ══ PONT SYNC λ ══════════════════════════════════════════════════════════════
+
+
+// ─── Modal prévisualisation export Predictor ─────────────────────────────────
+function showPredExportModal(imgData, hName, aName) {
+  var m = document.getElementById('predExportModal');
+  var img = document.getElementById('predExportImg');
+  var dlBtn = document.getElementById('predExportDlBtn');
+  if(!m || !img || !dlBtn) return;
+  img.src = imgData;
+  dlBtn.onclick = function(){
+    var link = document.createElement('a');
+    link.download = hName.replace(/ /g,'_')+'_vs_'+aName.replace(/ /g,'_')+'_prediction.png';
+    link.href = imgData;
+    link.click();
+  };
+  m.classList.add('open');
+}
+// ─── PONT PREDICTOR → SCORER PRO ─────────────────────────────────────────────
+function syncLambdaToScorer() {
+  if (!_data) return;
+  var lHr = _data.lHr, lAr = _data.lAr;
+  var hName = _data.hName, aName = _data.aName;
+
+  var hSlider = document.getElementById('homeLambda');
+  var aSlider = document.getElementById('awayLambda');
+  if (hSlider) {
+    hSlider.value = Math.min(4.0, Math.max(0.3, lHr)).toFixed(2);
+    var hVal = document.getElementById('homeLambdaVal');
+    if (hVal) hVal.textContent = parseFloat(hSlider.value).toFixed(2);
+  }
+  if (aSlider) {
+    aSlider.value = Math.min(4.0, Math.max(0.3, lAr)).toFixed(2);
+    var aVal = document.getElementById('awayLambdaVal');
+    if (aVal) aVal.textContent = parseFloat(aSlider.value).toFixed(2);
+  }
+
+  // Sync noms équipes
+  var scHome = document.getElementById('sc_homeNameInput');
+  var scAway = document.getElementById('sc_awayNameInput');
+  if (scHome && hName) scHome.value = hName;
+  if (scAway && aName) scAway.value = aName;
+
+  // Sync labels
+  var scHL = document.getElementById('sc_homeTeamLbl');
+  var scAL = document.getElementById('sc_awayTeamLbl');
+  if (scHL && hName) scHL.textContent = hName.toUpperCase();
+  if (scAL && aName) scAL.textContent = aName.toUpperCase();
+
+  sc_update();
+
+  // Badge de confirmation
+  showSyncBadge(lHr, lAr);
+}
+
+function showSyncBadge(lHr, lAr) {
+  var badge = document.getElementById('syncBadge');
+  if (!badge) return;
+  badge.textContent = '⚡ λ synchronisés : λDom ' + lHr.toFixed(2) + ' · λExt ' + lAr.toFixed(2);
+  badge.style.display = 'flex';
+  badge.style.opacity = '1';
+  clearTimeout(badge._t);
+  badge._t = setTimeout(function() {
+    badge.style.opacity = '0';
+    setTimeout(function() { badge.style.display = 'none'; badge.style.opacity = '1'; }, 500);
+  }, 3500);
+}
+
+// Patch update du predictor pour sync auto (seulement si scorer visible)
+var _origPredUpdate = update;
+update = function() {
+  _origPredUpdate.apply(this, arguments);
+  var scorerVisible = document.getElementById('tabScorer').style.display !== 'none';
+  if (_data && scorerVisible) syncLambdaToScorer();
+};
+
+
+// ══ INIT ══════════════════════════════════════════════════════════════════════
+// Predictor init
+renderForm('hFormRow','hForm');
+renderForm('hFormHomeRow','hFormHome');
+renderForm('aFormRow','aForm');
+renderForm('aFormAwayRow','aFormAway');
+renderHistory();
+updateH2H(); // initialise les ratios H2H et appelle update()
+// Scorer init
+loadPreset(0);
+// Sync initiale
+setTimeout(function(){ if(_data) syncLambdaToScorer(); }, 200);
+</script>
+</body>
+</html>
