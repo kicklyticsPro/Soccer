@@ -1,0 +1,8 @@
+flask==3.0.3
+flask-cors==4.0.1
+openai>=1.65.0
+httpx<0.28.0
+duckduckgo-search==6.2.4
+python-dotenv==1.0.1
+markdown==3.7
+requests==2.32.3
