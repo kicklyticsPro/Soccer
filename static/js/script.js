@@ -284,11 +284,13 @@
             function handleSSE(raw) {
                 const lines = raw.split("\n");
                 let event = "message";
-                let data = "";
+                const dataLines = [];
                 for (const l of lines) {
                     if (l.startsWith("event: ")) event = l.slice(7).trim();
-                    else if (l.startsWith("data: ")) data += l.slice(6);
+                    else if (l.startsWith("data: ")) dataLines.push(l.slice(6));
                 }
+                // Selon la spec SSE, les lignes data sont concaténées avec \n
+                const data = dataLines.join("\n");
                 if (!data) return;
 
                 if (event === "status") {
@@ -306,10 +308,9 @@
                     analysisContent.innerHTML = renderMarkdown(analysisBuffer);
                     analysisContent.scrollIntoView({ behavior: "smooth", block: "end" });
                 } else if (event === "done") {
-                    currentMarkdown = typeof data === "string" ? data : analysisBuffer;
-                    if (typeof data === "string" && data.length > analysisBuffer.length) {
+                    currentMarkdown = data;
+                    if (data.length > analysisBuffer.length) {
                         analysisBuffer = data;
-                        currentMarkdown = data;
                         analysisContent.innerHTML = renderMarkdown(analysisBuffer);
                     }
                     finishAnalysis();
