@@ -52,6 +52,23 @@
             .replace(/'/g, "&#039;");
     }
 
+    /**
+     * Détecte la catégorie d'un pari à partir de son nom.
+     */
+    function detectCategory(name) {
+        const n = name.toLowerCase();
+        if (n.includes("handicap") || n.includes("+1") || n.includes("-1") || n.includes("+0.5") || n.includes("-0.5") || n.includes("+1.5") || n.includes("-1.5")) return "Handicap";
+        if (n.includes("btts") || n.includes("les deux équipes") || n.includes("both teams")) return "BTTS";
+        if (n.includes("over") || n.includes("under") || n.includes("plus de") || n.includes("moins de")) return "Over/Under";
+        if (n.includes("score exact") || /^\d-\d/.test(n)) return "Score exact";
+        if (n.includes("mi-temps") || n.includes("ht/ft") || n.includes("ht")) return "Mi-temps";
+        if (n.includes("buteur") || n.includes("marque") || n.includes("joueur")) return "Joueur";
+        if (n.includes("corner")) return "Corners";
+        if (n.includes("carton")) return "Cartons";
+        if (n.includes("double chance")) return "Double chance";
+        return "1X2";
+    }
+
     function renderMarkdown(text) {
         if (md && typeof md.parse === "function") {
             return md.parse(text, { breaks: true, gfm: true });
@@ -258,17 +275,24 @@
         const score = scoreMatch ? scoreMatch[1].trim().replace(/\*+/g, '') : null;
         const confidence = confidenceMatch ? confidenceMatch[1] : null;
 
-        // Extraire les paris
+        // Extraire les paris avec catégories
         const bets = [];
-        const betRegex = /\d+\.\s*\*\*?([^*\n]+?)\*?\*?\s*-?\s*Cote\s+([\d.]+)\s*-?\s*Mise\s+(\d+)\/10\s*-?\s*([⭐]+)/gi;
+        // Pattern amélioré qui capture la catégorie
+        const betRegex = /\d+\.\s*\*\*?\[?([^\]:\n*]+?)(?:\]|\s+-\s+|\*?\*?)\s*\*?([^*\n]+?)\*?\*?\s*[-–]?\s*Cote\s+([\d.]+)\s*[-–]?\s*Mise\s+(\d+)\/10\s*[-–]?\s*([⭐]+)/gi;
         let m;
         while ((m = betRegex.exec(tldrText)) !== null) {
+            const catRaw = (m[1] || "").trim();
+            const nameRaw = (m[2] || "").trim();
+            // Si catRaw ressemble à une catégorie (1X2, Handicap, BTTS, etc.)
+            const knownCategories = ["1X2", "Handicap", "BTTS", "Over", "Under", "Score", "Mi-temps", "HT/FT", "Joueur", "Double", "Corners", "Cartons"];
+            const isCat = knownCategories.some(c => catRaw.includes(c));
             bets.push({
                 rank: bets.length + 1,
-                name: m[1].trim(),
-                cote: parseFloat(m[2]),
-                mise: parseInt(m[3]),
-                stars: m[4],
+                category: isCat ? catRaw : "Marché principal",
+                name: isCat ? nameRaw : catRaw + " " + nameRaw,
+                cote: parseFloat(m[3]),
+                mise: parseInt(m[4]),
+                stars: m[5],
             });
         }
 
@@ -276,9 +300,11 @@
         if (bets.length === 0) {
             const betRegex2 = /\d+\.\s*\*\*?([^*\n]+?)\*?\*?\s*[-–]\s*Cote\s*([\d.]+)/gi;
             while ((m = betRegex2.exec(tldrText)) !== null) {
+                const fullName = m[1].trim();
                 bets.push({
                     rank: bets.length + 1,
-                    name: m[1].trim(),
+                    category: detectCategory(fullName),
+                    name: fullName,
                     cote: parseFloat(m[2]),
                     mise: 5,
                     stars: "⭐⭐⭐⭐",
@@ -315,6 +341,7 @@
                 <div class="tldr-bet">
                     <div class="tldr-bet-rank">#${bet.rank}</div>
                     <div class="tldr-bet-body">
+                        <div class="tldr-bet-category">${escapeHtml(bet.category || 'Marché')}</div>
                         <div class="tldr-bet-name">${escapeHtml(bet.name)}</div>
                         <div class="tldr-bet-stars">${bet.stars}</div>
                     </div>
