@@ -1,1 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚽ Football Analyzer - Analyse de match style parieur pro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <div class="header-inner">
+                <div class="logo">
+                    <span class="logo-icon">⚽</span>
+                    <div>
+                        <h1>Football Analyzer</h1>
+                        <p class="subtitle">Analyse de match style parieur professionnel</p>
+                    </div>
+                </div>
+                <div class="status-pill" id="statusPill">
+                    <span class="dot"></span>
+                    <span id="statusText">Prêt</span>
+                </div>
+            </div>
+        </header>
 
+        <section class="hero">
+            <div class="hero-card">
+                <h2>Analyse un match de football</h2>
+                <p class="hero-desc">
+                    Entrez les deux équipes et optionnellement la date et la compétition.
+                    L'IA va rechercher les dernières informations, analyser la forme, l'historique
+                    et vous proposer une analyse complète avec paris recommandés.
+                </p>
+
+                <form id="analyzeForm" class="form">
+                    <div class="input-group">
+                        <label for="matchInput">
+                            Match à analyser
+                            <span class="hint">Format: <code>ÉquipeA vs ÉquipeB</code> (date et compétition optionnelles)</span>
+                        </label>
+                        <input
+                            type="text"
+                            id="matchInput"
+                            name="match"
+                            placeholder="France vs Sénégal - 16 Juin 2026"
+                            value="France vs Sénégal - 16 Juin 2026"
+                            autocomplete="off"
+                            required
+                        >
+                    </div>
+
+                    <div class="examples">
+                        <span>Exemples :</span>
+                        <button type="button" class="example-chip" data-example="France vs Sénégal - 16 Juin 2026">France vs Sénégal</button>
+                        <button type="button" class="example-chip" data-example="Real Madrid vs Barcelone - 26 Octobre 2025">Real vs Barça</button>
+                        <button type="button" class="example-chip" data-example="Manchester City vs Liverpool - 09 Novembre 2025">Man City vs Liverpool</button>
+                        <button type="button" class="example-chip" data-example="Allemagne vs Brésil - 25 Mars 2026">Allemagne vs Brésil</button>
+                        <button type="button" class="example-chip" data-example="Maroc vs Argentine">Maroc vs Argentine</button>
+                    </div>
+
+                    <button type="submit" class="btn-primary" id="submitBtn">
+                        <span class="btn-icon">🔍</span>
+                        <span class="btn-text">Lancer l'analyse complète</span>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <section class="progress-section" id="progressSection" hidden>
+            <div class="progress-card">
+                <div class="progress-header">
+                    <div class="spinner"></div>
+                    <div>
+                        <h3 id="progressTitle">Analyse en cours...</h3>
+                        <p id="progressStatus">Initialisation</p>
+                    </div>
+                </div>
+                <div class="progress-steps" id="progressSteps"></div>
+            </div>
+        </section>
+
+        <section class="result-section" id="resultSection" hidden>
+            <div class="result-toolbar">
+                <h2 id="resultTitle">📊 Analyse</h2>
+                <div class="toolbar-actions">
+                    <button id="copyBtn" class="btn-secondary" title="Copier en Markdown">📋 Copier</button>
+                    <button id="downloadBtn" class="btn-secondary" title="Télécharger en .md">💾 Télécharger</button>
+                    <button id="printBtn" class="btn-secondary" title="Imprimer / PDF">🖨️ Imprimer</button>
+                </div>
+            </div>
+
+            <div class="match-meta" id="matchMeta"></div>
+
+            <article class="analysis-content" id="analysisContent"></article>
+
+            <details class="context-block" id="contextBlock" hidden>
+                <summary>🔎 Voir les sources web utilisées pour cette analyse</summary>
+                <pre id="contextContent"></pre>
+            </details>
+        </section>
+
+        <section class="error-section" id="errorSection" hidden>
+            <div class="error-card">
+                <h3>❌ Erreur</h3>
+                <p id="errorMessage"></p>
+                <button id="errorDismiss" class="btn-secondary">Fermer</button>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>
+                ⚽ Football Analyzer &mdash; Propulsé par recherche web en temps réel et IA générative.
+                <br>
+                Modèle: <code>{{ llm_model }}</code>
+            </p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
