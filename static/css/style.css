@@ -488,6 +488,190 @@ body {
     margin: 24px 0;
 }
 
+/* ====== TLDR CARD (Paris à faire) ====== */
+.tldr-card {
+    background: linear-gradient(135deg, rgba(0, 217, 126, 0.08), rgba(79, 140, 255, 0.08));
+    border: 2px solid var(--accent);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+    animation: tldrAppear 500ms ease-out;
+}
+
+@keyframes tldrAppear {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.tldr-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.tldr-header h2 {
+    font-size: 22px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin: 0;
+}
+
+.btn-toggle {
+    padding: 8px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    color: var(--accent);
+    font-size: 13px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+    font-weight: 600;
+}
+
+.btn-toggle:hover {
+    background: var(--accent);
+    color: var(--bg);
+}
+
+.tldr-score {
+    background: var(--bg-elev);
+    border: 1px solid var(--accent-2);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    font-size: 18px;
+    text-align: center;
+}
+
+.tldr-score strong {
+    color: var(--accent);
+    font-size: 24px;
+    font-weight: 800;
+}
+
+.tldr-bets {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.tldr-bet {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 14px;
+    align-items: center;
+    transition: var(--transition);
+}
+
+.tldr-bet:hover {
+    border-color: var(--accent);
+    transform: translateX(4px);
+}
+
+.tldr-bet-rank {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--accent-3);
+    width: 36px;
+    text-align: center;
+}
+
+.tldr-bet-body {
+    flex: 1;
+}
+
+.tldr-bet-name {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 4px;
+    color: var(--text);
+}
+
+.tldr-bet-reason {
+    font-size: 13px;
+    color: var(--text-dim);
+}
+
+.tldr-bet-meta {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.tldr-bet-cote {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--accent);
+}
+
+.tldr-bet-mise {
+    font-size: 12px;
+    color: var(--text-dim);
+}
+
+.tldr-bet-stars {
+    font-size: 13px;
+}
+
+.tldr-bet-edge {
+    font-size: 11px;
+    color: var(--success);
+    font-weight: 700;
+}
+
+.tldr-extras {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.tldr-extra {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-size: 13px;
+}
+
+.tldr-extra strong {
+    color: var(--accent);
+}
+
+.tldr-extra.avoid {
+    border-color: var(--error);
+    background: rgba(255, 94, 94, 0.08);
+}
+
+.tldr-extra.avoid strong {
+    color: var(--error);
+}
+
+@media (max-width: 768px) {
+    .tldr-bet {
+        grid-template-columns: 1fr;
+        text-align: left;
+    }
+    .tldr-bet-rank { display: none; }
+    .tldr-bet-meta { flex-direction: row; gap: 10px; align-items: center; }
+}
+
 /* ====== CONTEXT BLOCK ====== */
 .context-block {
     margin-top: 16px;
