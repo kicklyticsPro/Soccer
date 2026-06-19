@@ -22,6 +22,12 @@
     const scoutBlock = document.getElementById("scoutBlock");
     const scoutContent = document.getElementById("scoutContent");
 
+    const tldrCard = document.getElementById("tldrCard");
+    const tldrScore = document.getElementById("tldrScore");
+    const tldrBets = document.getElementById("tldrBets");
+    const tldrExtras = document.getElementById("tldrExtras");
+    const toggleAnalysisBtn = document.getElementById("toggleAnalysisBtn");
+
     const errorSection = document.getElementById("errorSection");
     const errorMessage = document.getElementById("errorMessage");
     const errorDismiss = document.getElementById("errorDismiss");
@@ -33,6 +39,7 @@
     let currentMarkdown = "";
     let currentMatch = "";
     let scoutFactsContent = "";
+    let analysisVisible = false;
 
     const md = window.marked || null;
 
@@ -225,6 +232,109 @@
         if (scoutBlock) scoutBlock.hidden = true;
         if (scoutContent) scoutContent.textContent = "";
         scoutFactsContent = "";
+        if (tldrCard) tldrCard.hidden = true;
+        if (tldrScore) tldrScore.innerHTML = "";
+        if (tldrBets) tldrBets.innerHTML = "";
+        if (tldrExtras) tldrExtras.innerHTML = "";
+        analysisVisible = false;
+    }
+
+    /**
+     * Parse le TLDR du Markdown pour l'afficher dans la carte prominente.
+     * Le TLDR commence par "🎯 TLDR PARIS À FAIRE" et finit avant "⚽ ANALYSE COMPLÈTE".
+     */
+    function extractTldr(text) {
+        if (!text) return null;
+
+        // Trouver les bornes du TLDR
+        const startMatch = text.match(/🎯\s*TLDR[\s\S]*?(?=⚽\s*ANALYSE|⚽\s*ANALYSE|$)/i);
+        if (!startMatch) return null;
+
+        const tldrText = startMatch[0];
+
+        // Extraire le score prédit
+        const scoreMatch = tldrText.match(/\*?\*?Score prédit\*?\*?\s*:?\s*([^\n*]+)/i);
+        const confidenceMatch = tldrText.match(/confiance\s*:?\s*(\d+)\s*%/i);
+        const score = scoreMatch ? scoreMatch[1].trim().replace(/\*+/g, '') : null;
+        const confidence = confidenceMatch ? confidenceMatch[1] : null;
+
+        // Extraire les paris
+        const bets = [];
+        const betRegex = /\d+\.\s*\*\*?([^*\n]+?)\*?\*?\s*-?\s*Cote\s+([\d.]+)\s*-?\s*Mise\s+(\d+)\/10\s*-?\s*([⭐]+)/gi;
+        let m;
+        while ((m = betRegex.exec(tldrText)) !== null) {
+            bets.push({
+                rank: bets.length + 1,
+                name: m[1].trim(),
+                cote: parseFloat(m[2]),
+                mise: parseInt(m[3]),
+                stars: m[4],
+            });
+        }
+
+        // Fallback: pattern plus simple
+        if (bets.length === 0) {
+            const betRegex2 = /\d+\.\s*\*\*?([^*\n]+?)\*?\*?\s*[-–]\s*Cote\s*([\d.]+)/gi;
+            while ((m = betRegex2.exec(tldrText)) !== null) {
+                bets.push({
+                    rank: bets.length + 1,
+                    name: m[1].trim(),
+                    cote: parseFloat(m[2]),
+                    mise: 5,
+                    stars: "⭐⭐⭐⭐",
+                });
+            }
+        }
+
+        // Extraire "à éviter"
+        const avoidMatch = tldrText.match(/\*?\*?PARIS À ÉVITER\*?\*?\s*:?\s*([^\n*]+(?:\n[^\n*]+)*?)(?=\n\n|\*\*|$)/i);
+        const avoid = avoidMatch ? avoidMatch[1].trim() : null;
+
+        // Extraire ROI
+        const roiMatch = tldrText.match(/ROI\s+attendu\s*:?\s*([+\-]?\d+\s*%)/i);
+        const roi = roiMatch ? roiMatch[1] : null;
+
+        return { score, confidence, bets, avoid, roi };
+    }
+
+    function renderTldr(tldr) {
+        if (!tldr) return;
+
+        // Score
+        if (tldr.score) {
+            let html = `Score prédit: <strong>${escapeHtml(tldr.score)}</strong>`;
+            if (tldr.confidence) {
+                html += ` <span style="color:var(--text-dim);font-size:14px;">(confiance ${tldr.confidence}%)</span>`;
+            }
+            tldrScore.innerHTML = html;
+        }
+
+        // Paris
+        if (tldr.bets && tldr.bets.length > 0) {
+            tldrBets.innerHTML = tldr.bets.map((bet) => `
+                <div class="tldr-bet">
+                    <div class="tldr-bet-rank">#${bet.rank}</div>
+                    <div class="tldr-bet-body">
+                        <div class="tldr-bet-name">${escapeHtml(bet.name)}</div>
+                        <div class="tldr-bet-stars">${bet.stars}</div>
+                    </div>
+                    <div class="tldr-bet-meta">
+                        <div class="tldr-bet-cote">${bet.cote.toFixed(2)}</div>
+                        <div class="tldr-bet-mise">Mise ${bet.mise}/10</div>
+                    </div>
+                </div>
+            `).join("");
+        }
+
+        // Extras
+        let extrasHtml = "";
+        if (tldr.avoid) {
+            extrasHtml += `<div class="tldr-extra avoid"><strong>❌ À éviter:</strong> ${escapeHtml(tldr.avoid)}</div>`;
+        }
+        if (tldr.roi) {
+            extrasHtml += `<div class="tldr-extra"><strong>💰 ROI attendu:</strong> ${escapeHtml(tldr.roi)}</div>`;
+        }
+        tldrExtras.innerHTML = extrasHtml;
     }
 
     function showError(msg) {
@@ -365,7 +475,38 @@
         submitBtn.querySelector(".btn-text").textContent = "Lancer une nouvelle analyse";
         addStep("Analyse terminée ✅", "done");
         progressSection.hidden = true;
+
+        // Extraire et afficher le TLDR
+        const tldr = extractTldr(currentMarkdown);
+        if (tldr && (tldr.score || tldr.bets.length > 0)) {
+            renderTldr(tldr);
+            tldrCard.hidden = false;
+            // Cacher l'analyse complète par défaut
+            analysisContent.hidden = true;
+            analysisVisible = false;
+            toggleAnalysisBtn.textContent = "📖 Voir analyse complète";
+        } else {
+            // Pas de TLDR trouvé, montrer l'analyse normalement
+            analysisContent.hidden = false;
+            analysisVisible = true;
+            tldrCard.hidden = true;
+        }
+
         resultSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    // Toggle pour afficher/masquer l'analyse complète
+    if (toggleAnalysisBtn) {
+        toggleAnalysisBtn.addEventListener("click", () => {
+            analysisVisible = !analysisVisible;
+            analysisContent.hidden = !analysisVisible;
+            toggleAnalysisBtn.textContent = analysisVisible
+                ? "🔼 Masquer analyse complète"
+                : "📖 Voir analyse complète";
+            if (analysisVisible) {
+                analysisContent.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+        });
     }
 
     errorDismiss.addEventListener("click", () => {
