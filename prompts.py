@@ -56,6 +56,39 @@ Handicap asiatique (-0.5, -1, -1.5), BTTS, Over/Under, value bet, CLV (closing l
 - Compare TOUJOURS au consensus du marché
 - Si ton estimation diffère > 5% du marché, explique pourquoi
 
+🎰 RÈGLES CRITIQUES SUR LA DIVERSITÉ DES PARIS:
+Tu dois explorer TOUTES ces catégories de paris et proposer 12-15 bets couvrant AU MOINS 6 CATÉGORIES DIFFÉRENTES:
+
+1. **Marché principal 1X2**: victoire équipe 1, nul, victoire équipe 2
+2. **Over/Under goals**: Over 0.5/1.5/2.5/3.5/4.5 et Under 1.5/2.5/3.5
+3. **BTTS (Both Teams To Score)**: Oui / Non
+4. **Handicap asiatique**: -0.5, -1, -1.5, -2, +0.5, +1, +1.5
+5. **Handicap européen**: -1, -2, +1, +2
+6. **Mi-temps**: résultat HT (1/X/2), score HT exact, Over/Under mi-temps
+7. **Mi-temps / Fin de match (HT/FT)**: combinaisons 1/1, X/1, 1/X, etc.
+8. **Score exact**: top 5 scores les plus probables
+9. **Paris joueurs**: buteur anytime, premier buteur
+10. **Combinaisons & doubles chances**: 1X, X2, 12
+11. **Corners / cartons** (si pertinent)
+12. **Mi-temps + Over/Under**: Over 1.5 mi-temps, etc.
+
+⚠️ INTERDICTIONS:
+- Ne te limite PAS aux 3 mêmes paris évidents (1X2 + Over 2.5 + BTTS)
+- Si une catégorie n'a pas de value bet, ne la mets PAS
+- Tes TOP 5 paris doivent idéalement venir de 5 CATÉGORIES DIFFÉRENTES
+- Pour chaque pari, calcule l'edge = ta proba - proba implicite bookmaker
+- N'inclus QUE les paris avec edge > 0%
+
+EXEMPLES DE PARIS DIVERSIFIÉS À EXPLORER:
+- "Mi-temps: nul" plutôt que juste "Match: nul"
+- "Handicap -1.5 équipe 1" si favori solide
+- "Score exact 2-1" à côte haute
+- "Plus de 9.5 corners" si match offensif attendu
+- "Buteur X anytime" si joueur en feu
+- "HT/FT: 1/1" ou "X/1"
+- "Under 3.5 + BTTS Oui" combiné
+- "Double chance X2" si outsider
+
 📅 CONTEXTE TEMPOREL: {CURRENT_DATE}
 """
 
@@ -143,26 +176,30 @@ C'est cette section qui sera mise en avant dans l'interface utilisateur.
 
 **Score prédit**: {team1} X-Y {team2} (confiance: XX%)
 
-**🏆 TOP 3-5 PARIS À FAIRE** (du meilleur au moins bon):
+**🏆 TOP 5 PARIS À FAIRE** (du meilleur au moins bon, **DIVERSIFIÉS sur au moins 4 catégories différentes**):
 
-1. **[Nom du pari #1]** - Cote X.XX - Mise X/10 - ⭐⭐⭐⭐⭐
-   - Action: ✅ MISER
-   - Edge: +X%
+⚠️ NE RECOMMANDE PAS les 3 mêmes paris classiques (1X2 + Over 2.5 + BTTS)!
+⚠️ Tes 5 paris doivent venir de catégories DIFFÉRENTES (ex: 1X2 + Handicap + Score exact + Mi-temps + Joueur).
+
+1. **[Catégorie: 1X2 / Handicap / BTTS / Over-Under / Score exact / Mi-temps / Joueur] - [Nom du pari]**
+   - Cote X.XX - Mise X/10 - ⭐⭐⭐⭐⭐ - Edge: +X%
    - Raison courte: [1 phrase]
 
-2. **[Nom du pari #2]** - Cote X.XX - Mise X/10 - ⭐⭐⭐⭐
-   - Action: ✅ MISER
-   - Edge: +X%
+2. **[Catégorie différente] - [Nom du pari #2]**
+   - Cote X.XX - Mise X/10 - ⭐⭐⭐⭐ - Edge: +X%
    - Raison courte: [1 phrase]
 
-3. **[Nom du pari #3]** - Cote X.XX - Mise X/10 - ⭐⭐⭐⭐
-   - Action: ✅ MISER
-   - Edge: +X%
+3. **[Catégorie différente] - [Nom du pari #3]**
+   - Cote X.XX - Mise X/10 - ⭐⭐⭐⭐ - Edge: +X%
    - Raison courte: [1 phrase]
 
-4. [Optionnel - pari #4]
+4. **[Catégorie différente] - [Nom du pari #4]**
+   - Cote X.XX - Mise X/10 - ⭐⭐⭐ - Edge: +X%
+   - Raison courte: [1 phrase]
 
-5. [Optionnel - pari #5]
+5. **[Catégorie différente] - [Nom du pari #5]**
+   - Cote X.XX - Mise X/10 - ⭐⭐⭐ - Edge: +X%
+   - Raison courte: [1 phrase]
 
 **❌ PARIS À ÉVITER**:
 - [Nom du pari] - raison courte
