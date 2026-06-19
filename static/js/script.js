@@ -229,7 +229,22 @@
 
     function showError(msg) {
         errorSection.hidden = false;
-        errorMessage.textContent = msg;
+        let html = "";
+        if (msg.includes("413") || msg.toLowerCase().includes("rate_limit") || msg.toLowerCase().includes("tokens per minute")) {
+            html = `<strong>⚠️ Rate limit Groq atteint (6000 TPM)</strong><br><br>
+            Le serveur LLM a une limite de tokens par minute sur le free tier.<br>
+            Solutions:<br>
+            • <strong>Attendez 30 secondes</strong> et réessayez<br>
+            • Réduisez le nombre de passes (USE_MULTI_PASS=false)<br>
+            • Utilisez un modèle plus petit: <code>llama-3.3-70b-versatile</code><br>
+            • Passez à Groq Dev Tier (payant) sur <a href="https://console.groq.com/settings/billing" target="_blank">console.groq.com</a><br><br>
+            <details><summary>Détails techniques</summary><pre>${escapeHtml(msg)}</pre></details>`;
+        } else if (msg.toLowerCase().includes("api key") || msg.toLowerCase().includes("unauthorized")) {
+            html = `<strong>🔑 Clé API invalide</strong><br><br>Vérifiez votre LLM_API_KEY dans le fichier <code>.env</code>.`;
+        } else {
+            html = `<strong>Erreur:</strong> ${escapeHtml(msg)}`;
+        }
+        errorMessage.innerHTML = html;
         setStatus("Erreur", "error");
         progressSection.hidden = true;
         submitBtn.disabled = false;
