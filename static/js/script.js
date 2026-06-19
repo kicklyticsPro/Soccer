@@ -19,6 +19,8 @@
     const analysisContent = document.getElementById("analysisContent");
     const contextBlock = document.getElementById("contextBlock");
     const contextContent = document.getElementById("contextContent");
+    const scoutBlock = document.getElementById("scoutBlock");
+    const scoutContent = document.getElementById("scoutContent");
 
     const errorSection = document.getElementById("errorSection");
     const errorMessage = document.getElementById("errorMessage");
@@ -30,6 +32,7 @@
 
     let currentMarkdown = "";
     let currentMatch = "";
+    let scoutFactsContent = "";
 
     const md = window.marked || null;
 
@@ -219,6 +222,9 @@
         matchMeta.innerHTML = "";
         contextBlock.hidden = true;
         contextContent.textContent = "";
+        if (scoutBlock) scoutBlock.hidden = true;
+        if (scoutContent) scoutContent.textContent = "";
+        scoutFactsContent = "";
     }
 
     function showError(msg) {
@@ -289,7 +295,6 @@
                     if (l.startsWith("event: ")) event = l.slice(7).trim();
                     else if (l.startsWith("data: ")) dataLines.push(l.slice(6));
                 }
-                // Selon la spec SSE, les lignes data sont concaténées avec \n
                 const data = dataLines.join("\n");
                 if (!data) return;
 
@@ -300,9 +305,18 @@
                     contextContent.textContent = data;
                     contextBlock.hidden = false;
                     addStep("Contexte collecté", "done");
+                } else if (event === "scout_start") {
+                    addStep("🕵️ Pass 1: Scout - extraction des faits clés", "active");
+                } else if (event === "scout_done") {
+                    addStep("✅ Pass 1: Scout terminé", "done");
+                    scoutFactsContent = data;
+                    if (scoutBlock) scoutBlock.hidden = false;
+                    if (scoutContent) scoutContent.textContent = data;
+                } else if (event === "expert_start") {
+                    addStep("🧠 Pass 2: Expert - analyse probabiliste", "active");
                 } else if (event === "token") {
                     if (!analysisBuffer && data.trim().length > 0) {
-                        addStep("Génération de l'analyse", "active");
+                        addStep("Réception de l'analyse", "active");
                     }
                     analysisBuffer += data;
                     analysisContent.innerHTML = renderMarkdown(analysisBuffer);
