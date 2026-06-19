@@ -92,7 +92,19 @@
 
             <div class="match-meta" id="matchMeta"></div>
 
-            <article class="analysis-content" id="analysisContent"></article>
+            <section class="tldr-card" id="tldrCard" hidden>
+                <div class="tldr-header">
+                    <h2>🎯 TLDR — Paris à faire</h2>
+                    <button class="btn-toggle" id="toggleAnalysisBtn" type="button">
+                        📖 Voir analyse complète
+                    </button>
+                </div>
+                <div class="tldr-score" id="tldrScore"></div>
+                <div class="tldr-bets" id="tldrBets"></div>
+                <div class="tldr-extras" id="tldrExtras"></div>
+            </section>
+
+            <article class="analysis-content" id="analysisContent" hidden></article>
 
             <details class="context-block" id="scoutBlock" hidden>
                 <summary>🕵️ Fiche Scout (Pass 1 - faits extraits par IA)</summary>
