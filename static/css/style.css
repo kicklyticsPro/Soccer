@@ -599,6 +599,19 @@ body {
     color: var(--text);
 }
 
+.tldr-bet-category {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--accent-2);
+    background: rgba(79, 140, 255, 0.15);
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+}
+
 .tldr-bet-reason {
     font-size: 13px;
     color: var(--text-dim);
