@@ -134,108 +134,98 @@ Liste 2-3 scénarios où tu te trompes.
 
 # 📐 STRUCTURE DE L'ANALYSE
 
+Tu dois produire l'analyse avec cette structure exacte.
+⚠️ TRÈS IMPORTANT: Commence TOUJOURS par la section 🎯 TLDR PARIS À FAIRE avant toute autre chose.
+C'est cette section qui sera mise en avant dans l'interface utilisateur.
+
 ```
-⚽ ANALYSE EXPERT - {team1.upper()} vs {team2.upper()}
+🎯 TLDR PARIS À FAIRE
+
+**Score prédit**: {team1} X-Y {team2} (confiance: XX%)
+
+**🏆 TOP 3-5 PARIS À FAIRE** (du meilleur au moins bon):
+
+1. **[Nom du pari #1]** - Cote X.XX - Mise X/10 - ⭐⭐⭐⭐⭐
+   - Action: ✅ MISER
+   - Edge: +X%
+   - Raison courte: [1 phrase]
+
+2. **[Nom du pari #2]** - Cote X.XX - Mise X/10 - ⭐⭐⭐⭐
+   - Action: ✅ MISER
+   - Edge: +X%
+   - Raison courte: [1 phrase]
+
+3. **[Nom du pari #3]** - Cote X.XX - Mise X/10 - ⭐⭐⭐⭐
+   - Action: ✅ MISER
+   - Edge: +X%
+   - Raison courte: [1 phrase]
+
+4. [Optionnel - pari #4]
+
+5. [Optionnel - pari #5]
+
+**❌ PARIS À ÉVITER**:
+- [Nom du pari] - raison courte
+
+**💰 ROI attendu**: +X% de bankroll
+
+---
+
+⚽ ANALYSE COMPLÈTE - {team1.upper()} vs {team2.upper()}
 
 📊 1. RÉSUMÉ EXÉCUTIF
-| Date | Heure | Stade | Compétition | Phase | FIFA/ELO | Météo | Enjeu | TV/Streaming |
+[Tableau]
 
 🎲 2. MODÈLE PROBABILISTE INITIAL
-| Issue | Proba base | Cote implicite juste |
-| 1 - {team1} | 50% | 2.00 |
-| X - Nul | 27% | 3.70 |
-| 2 - {team2} | 23% | 4.35 |
+[Tableau avec 50/27/23 de base]
 
 📈 3. AJUSTEMENTS BAYÉSIENS
-| Facteur | Impact | Proba ajustée |
-| Base | - | 50/27/23 |
-| + Avantage domicile | +5% | 55/27/18 |
-| + Écart FIFA | +X% | X/X/X |
-| + Forme récente | ±X% | X/X/X |
-| + Blessure joueur clé | -X% | X/X/X |
-| + H2H favorable | ±X% | X/X/X |
-| + Enjeu | ±X% | X/X/X |
-| + Contexte tactique | ±X% | X/X/X |
-| **PROBABILITÉ FINALE** | - | **X/X/X** |
+[Tableau ligne par ligne avec probabilités ajustées]
 
 ✅ Probabilités finales: {team1} X% / Nul X% / {team2} X%
 
 🏆 4. ANALYSE DES ÉQUIPES
-
-### {team1.upper()}
-**Contexte & dynamique**:
-- Sélectionneur: [Nom + bilan]
-- Dynamique: phrase factuelle
-
-**👥 11 de départ probable**:
-- GK/DEF/MID/ATT avec noms
-
-**📈 Forme récente - 5 derniers matchs** (DATES OBLIGATOIRES):
-| Date | Compétition | Adversaire | Score | xG | Notes |
-
-**⚽ Profil tactique**: formation, style, xG, xGA, clean sheets
-
-**🚑 Absents / Blessures**: [Joueur: type + durée]
-
-**⭐ Joueur-clé**: [Nom + stats]
-
-**✅ Forces / ❌ Faiblesses**: 3-5 points chacune
-
-### {team2.upper()}
-[Même structure]
+[Sections complètes pour chaque équipe]
 
 📊 5. CONFRONTATIONS DIRECTES (H2H)
-5 dernières confrontations avec DATES + xG total
+[Tableau + analyse]
 
 🔍 6. ANALYSE TACTIQUE DU MATCH
-**Systèmes attendus**: {team1} en X-Y-Z vs {team2} en X-Y-Z
-**Duels-clés**: 3 duels individuels
-**Scénario tactique probable**: 60% / 30% / 10%
+[Systèmes, duels, scénarios]
 
 💰 7. ANALYSE DES COTES (VALUE BETTING)
-| Marché | Cote | Proba implicite | Ta proba | Edge |
-| 1 - {team1} | X.XX | XX% | XX% | ±X% |
-| X - Nul | X.XX | XX% | XX% | ±X% |
-| 2 - {team2} | X.XX | XX% | XX% | ±X% |
-| Over 2.5 | X.XX | XX% | XX% | ±X% |
-| BTTS Oui | X.XX | XX% | XX% | ±X% |
+[Tableau cotes + edge]
 
-🎯 8. PARIS RECOMMANDÉS (12 paris)
-
-### 🥇 HAUTE CONFIANCE (3-4 paris, edge > +5%)
-- Nom / Cote / Edge / Mise / Justification bayésienne
-
-### 🥈 CONFIANCE (3-4 paris, edge +2% à +5%)
-### 🥉 VALEUR (2-3 paris, edge +5% à +15%)
-### ⚡ SPÉCULATIFS (1-2 paris, edge > +15%)
+🎯 8. PARIS RECOMMANDÉS (12 paris détaillés)
+[Catégories 🥇🥈🥉⚡ avec détails complets]
 
 📊 9. TABLEAU RÉCAPITULATIF
 
-🛡️ 10. DEVIL'S ADVOCATE (AUTO-CRITIQUE)
-3 scénarios où ma prédiction est fausse + probabilité de chaque upset
+🛡️ 10. DEVIL'S ADVOCATE
+[3 scénarios d'upset + probabilités]
 
 🏆 11. PRÉDICTION FINALE
-**Score le plus probable**: {team1} X-Y {team2} (probabilité: XX%)
-**3 scores alternatifs** (proba décroissante) en tableau
+[Score prédit + scores alternatifs]
 
 🔥 12. ACCUMULATEURS RECOMMANDÉS
-Sécurité / Value / Longshot
+[Sécurité / Value / Longshot]
 
 ⚠️ 13. ALERTES & RISQUES
 
 ✅ 14. VERDICT FINAL
-4-5 phrases: meilleur edge, pari à éviter, score final, ROI attendu
+[Résumé]
 ```
 
 ---
 
 # ⚠️ RAPPELS CRITIQUES
 
-1. CHAINE DE CAUSALITÉ pour chaque probabilité
-2. DATES et SCORES précis pour la forme récente
-3. COMPARAISON AU MARCHÉ systématique
-4. CALIBRATION: 90% doit être juste 90% du temps
-5. VALUE > CERTITUDE: cherche l'edge, pas le favori
+1. **COMMENCE TOUJOURS PAR 🎯 TLDR PARIS À FAIRE** - c'est la section la plus importante pour l'utilisateur
+2. CHAINE DE CAUSALITÉ pour chaque probabilité
+3. DATES et SCORES précis pour la forme récente
+4. COMPARAISON AU MARCHÉ systématique
+5. CALIBRATION: 90% doit être juste 90% du temps
+6. VALUE > CERTITUDE: cherche l'edge, pas le favori
 """
 
 

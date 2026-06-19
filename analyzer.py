@@ -160,7 +160,8 @@ def analyze_match_stream(
 
         messages = build_chat_messages(team1, team2, date, competition, web_context, scout_facts)
         strip = is_reasoning_model(expert_model)
-        max_tokens_out = 3500 if strip else 2500
+        # Llama-3.3-70b ne fait PAS de thinking, donc plus de budget pour la sortie
+        max_tokens_out = 3500 if strip else 4000
 
         full = []
         for token in stream_analysis(
