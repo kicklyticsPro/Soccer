@@ -17,6 +17,26 @@ app = Flask(__name__)
 CORS(app)
 
 
+def _format_sse(event: str, data) -> str:
+    """Formate un événement SSE en respectant la spec (multi-lignes supportées).
+
+    Spec SSE: https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events
+    Le champ `data` peut être réparti sur plusieurs lignes `data: ...` ; elles
+    sont concaténées avec \n par le client.
+    """
+    if isinstance(data, str):
+        payload = data
+    else:
+        payload = json.dumps(data, ensure_ascii=False)
+    lines = ["event: " + event]
+    for line in payload.split("\n"):
+        lines.append("data: " + line)
+    # Deux sauts de ligne pour terminer l'événement
+    lines.append("")
+    lines.append("")
+    return "\n".join(lines)
+
+
 @app.route("/")
 def index():
     """Page principale avec le formulaire d'analyse."""
@@ -71,7 +91,7 @@ def analyze():
 
     def generate():
         for evt in analyze_match_stream(team1, team2, date, competition):
-            yield f"event: {evt['event']}\ndata: {json.dumps(evt['data'], ensure_ascii=False)}\n\n"
+            yield _format_sse(evt["event"], evt["data"])
 
     return Response(generate(), mimetype="text/event-stream")
 
